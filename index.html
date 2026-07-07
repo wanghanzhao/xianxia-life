@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260707-iphone14-actions" />
+    <link rel="stylesheet" href="./styles.css?v=20260707-world-v2" />
   </head>
   <body>
     <main class="app">
@@ -26,6 +26,7 @@
             道号
             <input id="nameInput" maxlength="8" value="青玄" />
           </label>
+          <div class="gender-select" id="genderSelect" aria-label="选择立绘"></div>
           <div class="origin-grid" id="originGrid"></div>
           <button id="startBtn" class="primary" type="button">入世修行</button>
         </div>
@@ -34,7 +35,9 @@
       <section id="game" class="game hidden">
         <aside class="stats-panel" data-mobile-panel="details">
           <div class="portrait">
-            <div class="sigil">道</div>
+            <div class="avatar-frame">
+              <img id="heroAvatar" src="./assets/characters/cultivator-male.png" alt="角色立绘" />
+            </div>
             <div>
               <h2 id="heroName">青玄</h2>
               <p id="heroTitle">凡人</p>
@@ -133,7 +136,9 @@
           </div>
           <div class="modal-body">
             <div class="portrait modal-portrait">
-              <div class="sigil">道</div>
+              <div class="avatar-frame">
+                <img id="detailHeroAvatar" src="./assets/characters/cultivator-male.png" alt="角色立绘" />
+              </div>
               <div>
                 <h2 id="detailHeroName">青玄</h2>
                 <p id="detailHeroTitle">凡人</p>
@@ -159,8 +164,9 @@
           </div>
         </section>
       </div>
+      <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     </main>
 
-    <script src="./src/game.js?v=20260707-sect-v1"></script>
+    <script src="./src/game.js?v=20260707-world-v2"></script>
   </body>
 </html>
