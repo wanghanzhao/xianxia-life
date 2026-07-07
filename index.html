@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260707-mobile" />
+    <link rel="stylesheet" href="./styles.css?v=20260707-tabs" />
   </head>
   <body>
     <main class="app">
@@ -32,7 +32,7 @@
       </section>
 
       <section id="game" class="game hidden">
-        <aside class="stats-panel">
+        <aside class="stats-panel" data-mobile-panel="status">
           <div class="portrait">
             <div class="sigil">道</div>
             <div>
@@ -57,8 +57,8 @@
           </div>
         </aside>
 
-        <section class="main-panel">
-          <div class="year-card">
+        <section class="main-panel" data-mobile-panel="action">
+          <div class="year-card" data-mobile-panel-child="action">
             <div>
               <p class="eyebrow">当前年岁</p>
               <strong id="ageText">16 岁</strong>
@@ -69,9 +69,9 @@
             </div>
           </div>
 
-          <div class="actions" id="actions"></div>
+          <div class="actions" id="actions" data-mobile-panel-child="action"></div>
 
-          <article class="log-panel">
+          <article class="log-panel" data-mobile-panel="log">
             <div class="log-head">
               <h2>修行纪年</h2>
               <button id="clearLogBtn" type="button">清空</button>
@@ -80,24 +80,38 @@
           </article>
         </section>
 
-        <aside class="side-panel">
-          <h2>资源与资质</h2>
-          <div id="resourceGrid" class="resource-grid"></div>
-          <div class="quick-actions">
+        <aside class="side-panel" data-mobile-panel="market">
+          <div data-mobile-panel-child="status">
+            <h2>资源与资质</h2>
+            <div id="resourceGrid" class="resource-grid"></div>
+          </div>
+          <div class="quick-actions" data-mobile-panel-child="market">
             <button id="usePillBtn" type="button">服用清心丹</button>
             <button id="buyPillBtn" type="button">购买清心丹</button>
             <button id="buyBreakPillBtn" type="button">坊市求丹</button>
             <button id="studyManualBtn" type="button">参悟残卷</button>
             <button id="restWithStoneBtn" type="button">灵石调息</button>
           </div>
-          <h2>交易行</h2>
-          <div id="marketPanel" class="market-panel"></div>
-          <h2>机缘与负累</h2>
-          <div id="traits" class="traits"></div>
-          <h2>行囊</h2>
-          <div id="inventory" class="inventory"></div>
+          <div data-mobile-panel-child="market">
+            <h2>交易行</h2>
+            <div id="marketPanel" class="market-panel"></div>
+          </div>
+          <div data-mobile-panel-child="bag">
+            <h2>机缘与负累</h2>
+            <div id="traits" class="traits"></div>
+            <h2>行囊</h2>
+            <div id="inventory" class="inventory"></div>
+          </div>
         </aside>
       </section>
+
+      <nav id="mobileTabs" class="mobile-tabs hidden" aria-label="移动端页签">
+        <button data-tab="status" type="button">状态</button>
+        <button data-tab="action" type="button">行动</button>
+        <button data-tab="log" type="button">纪年</button>
+        <button data-tab="market" type="button">坊市</button>
+        <button data-tab="bag" type="button">行囊</button>
+      </nav>
 
       <article id="choicePanel" class="choice-panel choice-float hidden">
         <p class="eyebrow">当下抉择</p>
@@ -107,6 +121,6 @@
       </article>
     </main>
 
-    <script src="./src/game.js?v=20260707-market-select"></script>
+    <script src="./src/game.js?v=20260707-tabs"></script>
   </body>
 </html>
