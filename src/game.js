@@ -9,6 +9,18 @@ const realms = [
   { name: "渡劫", need: 99999, insightNeed: 220, mindNeed: 98, life: 1400 }
 ];
 
+const breakthroughPills = [
+  { id: "qi", name: "凝气丹", targetRealm: 1, bonus: 16, cost: 90 },
+  { id: "foundation", name: "筑基丹", targetRealm: 2, bonus: 24, cost: 180 },
+  { id: "foundationPure", name: "上品筑基丹", targetRealm: 2, bonus: 40, cost: 360, rare: true },
+  { id: "goldCore", name: "结金丹", targetRealm: 3, bonus: 24, cost: 420 },
+  { id: "goldCorePure", name: "上品结金丹", targetRealm: 3, bonus: 38, cost: 820, rare: true },
+  { id: "nascent", name: "化婴丹", targetRealm: 4, bonus: 22, cost: 980 },
+  { id: "spirit", name: "凝神丹", targetRealm: 5, bonus: 20, cost: 1800 },
+  { id: "harmony", name: "合道丹", targetRealm: 6, bonus: 18, cost: 3200 },
+  { id: "tribulation", name: "渡劫丹", targetRealm: 7, bonus: 16, cost: 5200 }
+];
+
 const origins = [
   {
     id: "farmer",
@@ -31,7 +43,7 @@ const origins = [
   {
     id: "herb",
     name: "药谷童子",
-    desc: "识草木药性，善避灾厄。丹药 +2，福缘 +6。",
+    desc: "识草木药性，善避灾厄。清心丹 +2，福缘 +6。",
     patch: { pills: 2, luck: 6 }
   }
 ];
@@ -505,6 +517,7 @@ const defaultState = {
   power: 12,
   spiritStones: 30,
   pills: 0,
+  breakPills: {},
   traits: [],
   inventory: [],
   pendingChoice: null,
@@ -530,6 +543,16 @@ function add(target, patch) {
   target.cultivation = Math.max(0, target.cultivation);
 }
 
+function addBreakPill(pillId, amount = 1) {
+  state.breakPills[pillId] = (state.breakPills[pillId] ?? 0) + amount;
+}
+
+function removeBreakPill(pillId) {
+  if (!state.breakPills[pillId]) return;
+  state.breakPills[pillId] -= 1;
+  if (state.breakPills[pillId] <= 0) delete state.breakPills[pillId];
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -544,6 +567,59 @@ function realm() {
 
 function nextRealm() {
   return realms[state.realm + 1];
+}
+
+function targetRealmIndex() {
+  return state.realm + 1;
+}
+
+function pillsForTarget(targetIndex = targetRealmIndex()) {
+  return breakthroughPills.filter((pill) => pill.targetRealm === targetIndex);
+}
+
+function ownedPillsForTarget(targetIndex = targetRealmIndex()) {
+  return pillsForTarget(targetIndex)
+    .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
+    .sort((a, b) => b.bonus - a.bonus);
+}
+
+function bestBreakPillForTarget() {
+  return ownedPillsForTarget()[0] ?? null;
+}
+
+function baseBreakChance() {
+  return clamp(Math.floor(
+    8 +
+    state.mind * 0.12 +
+    state.luck * 0.7 +
+    state.insight * 0.65 +
+    state.worldliness * 0.25 -
+    state.seclusionFatigue * 5 -
+    state.realm * 6
+  ), 5, 75);
+}
+
+function breakthroughChance(pill = bestBreakPillForTarget()) {
+  return clamp(baseBreakChance() + (pill?.bonus ?? 0), 5, 90);
+}
+
+function pickMarketPill() {
+  const options = pillsForTarget();
+  if (!options.length) return null;
+  const rare = options.find((pill) => pill.rare);
+  if (rare && roll(1, 100) <= 18 + state.luck * 2 + state.worldliness) return rare;
+  return options.find((pill) => !pill.rare) ?? options[0];
+}
+
+function maybeFindBreakthroughPill(kind) {
+  if (!nextRealm()) return "";
+  const chanceMap = { travel: 10, social: 6, dungeon: 20 };
+  const chance = (chanceMap[kind] ?? 0) + Math.floor(state.luck / 2);
+  if (roll(1, 100) > chance) return "";
+  const pill = pickMarketPill();
+  if (!pill) return "";
+  addBreakPill(pill.id);
+  return ` 你还意外得了一枚「${pill.name}」，下次冲击${nextRealm().name}可增加 ${pill.bonus}% 成功率。`;
 }
 
 function log(text, type = "") {
@@ -638,6 +714,7 @@ function openEncounter(kind, baseGain = 0) {
   const index = roll(0, encounters[kind].length - 1);
   const event = encounters[kind][index];
   state.pendingChoice = {
+    kind,
     title: event.title,
     text: event.text,
     choices: generateChoices(kind)
@@ -653,8 +730,9 @@ function chooseOption(index) {
   const choice = event.choices[index];
   if (!choice) return;
   const practiceGain = applyChoice(choice);
+  const foundPillText = maybeFindBreakthroughPill(event.kind);
   const gainText = practiceGain > 0 ? ` 此番经历令你修为增长 ${practiceGain}。` : "";
-  log(`${choice.result}${gainText}`, choice.type);
+  log(`${choice.result}${gainText}${foundPillText}`, choice.type);
   state.pendingChoice = null;
   if (state.ended) {
     save();
@@ -769,9 +847,12 @@ function attemptBreakthrough() {
     return;
   }
 
-  const chance = 12 + state.mind * 0.18 + state.luck * 1.1 + state.insight * 0.9 + state.pills * 3 + state.worldliness * 0.45 - state.seclusionFatigue * 6 - state.realm * 4;
+  const pill = bestBreakPillForTarget();
+  const chance = breakthroughChance(pill);
   const success = roll(1, 100) <= chance;
+  if (pill) removeBreakPill(pill.id);
   passYears(1);
+  const pillText = pill ? `你服下「${pill.name}」，破境成功率提升 ${pill.bonus}%，此番成功率为 ${chance}%。` : `未得破境丹护持，此番成功率仅 ${chance}%。`;
 
   if (success) {
     state.realm += 1;
@@ -782,19 +863,17 @@ function attemptBreakthrough() {
     state.life = realms[state.realm].life + state.luck;
     state.health = 100;
     state.mind = clamp(state.mind + 8, 0, 100);
-    if (state.pills > 0) state.pills -= 1;
-    log(`雷声隐隐，你破关而出，终成${realm().name}修士。寿元增至 ${state.life}。`, "gold");
+    log(`${pillText} 雷声隐隐，你破关而出，终成${realm().name}修士。寿元增至 ${state.life}。`, "gold");
   } else {
     state.cultivation = Math.floor(state.cultivation * 0.62);
     state.health -= roll(24, 48);
     state.mind -= roll(10, 22);
     state.seclusionFatigue = clamp(state.seclusionFatigue + 2, 0, 10);
-    if (state.pills > 0) state.pills -= 1;
     if (state.health <= 0 || roll(1, 100) <= 8 + state.realm * 3) {
-      die(state, "冲关失败，灵气倒卷，经脉寸断，你没能撑过这场大劫。");
+      die(state, `${pillText} 冲关失败，灵气倒卷，经脉寸断，你没能撑过这场大劫。`);
       return;
     }
-    log(`冲关失败，灵气倒卷，经脉如焚。你勉强保住根基。`, "danger");
+    log(`${pillText} 冲关失败，灵气倒卷，经脉如焚。你勉强保住根基。`, "danger");
   }
 }
 
@@ -865,6 +944,7 @@ function normalizeState(saved) {
     ...saved,
     traits: saved.traits ?? [],
     inventory: saved.inventory ?? [],
+    breakPills: saved.breakPills ?? {},
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
     log: saved.log ?? []
   };
@@ -924,7 +1004,8 @@ function render() {
     ["福缘", state.luck],
     ["战力", state.power],
     ["灵石", state.spiritStones],
-    ["丹药", state.pills],
+    ["清心丹", state.pills],
+    ["破境丹", Object.values(state.breakPills).reduce((sum, amount) => sum + amount, 0)],
     ["尘缘", state.worldliness],
     ["闭关疲惫", state.seclusionFatigue]
   ].map(([label, value]) => `<div class="resource"><span>${label}</span><strong>${value}</strong></div>`).join("");
@@ -951,9 +1032,14 @@ function render() {
     ? state.traits.map((trait) => `<span class="pill">${trait}</span>`).join("")
     : `<span class="pill">暂无</span>`;
 
-  $("inventory").innerHTML = state.inventory.length
-    ? state.inventory.map((item) => `<span class="pill">${item}</span>`).join("")
-    : `<span class="pill">空空如也</span>`;
+  const breakPillItems = breakthroughPills
+    .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
+    .map((pill) => `<span class="pill">${pill.name} x${state.breakPills[pill.id]} (+${pill.bonus}%)</span>`);
+  const inventoryItems = [
+    ...state.inventory.map((item) => `<span class="pill">${item}</span>`),
+    ...breakPillItems
+  ];
+  $("inventory").innerHTML = inventoryItems.length ? inventoryItems.join("") : `<span class="pill">空空如也</span>`;
 }
 
 function renderChoicePanel() {
@@ -989,10 +1075,16 @@ function renderBreakNeed() {
     ["悟道", state.dao, current.insightNeed]
   ];
 
-  $("breakNeed").innerHTML = items.map(([label, value, need]) => {
+  const needHtml = items.map(([label, value, need]) => {
     const ok = value >= need;
     return `<div class="need-line ${ok ? "ok" : "bad"}"><span>${label}</span><strong>${value}/${need}</strong></div>`;
   }).join("");
+  const pill = bestBreakPillForTarget();
+  const pillName = pill ? `${pill.name} +${pill.bonus}%` : "无";
+  $("breakNeed").innerHTML = `${needHtml}
+    <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
+    <div class="need-line ${pill ? "ok" : "bad"}"><span>可用破境丹</span><strong>${pillName}</strong></div>
+    <div class="need-line ${pill ? "ok" : ""}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>`;
 }
 
 $("startBtn").addEventListener("click", startLife);
@@ -1018,25 +1110,49 @@ $("choiceOptions").addEventListener("click", (event) => {
 $("usePillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
   if (state.pills <= 0) {
-    log("你翻遍行囊，并无可用丹药。", "danger");
+    log("你翻遍行囊，并无可用清心丹。", "danger");
     render();
     return;
   }
   state.pills -= 1;
   add(state, { health: 34, mind: 8, seclusionFatigue: -1 });
-  log("你服下一枚丹药，药力化开，气血与心境稍得恢复。", "gold");
+  log("你服下一枚清心丹，药力化开，气血与心境稍得恢复。", "gold");
   save();
   render();
 });
 $("buyPillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
   if (state.spiritStones < 80) {
-    log("坊市丹药昂贵，至少需要 80 灵石。", "danger");
+    log("坊市清心丹昂贵，至少需要 80 灵石。", "danger");
     render();
     return;
   }
   add(state, { spiritStones: -80, pills: 1, worldliness: 1 });
   log("你在坊市购得一枚清心丹，花去 80 灵石。", "gold");
+  save();
+  render();
+});
+$("buyBreakPillBtn").addEventListener("click", () => {
+  if (!state || state.ended) return;
+  if (!nextRealm()) {
+    log("你已立于此界巅峰，寻常破境丹再无用处。", "gold");
+    render();
+    return;
+  }
+  const pill = pickMarketPill();
+  if (!pill) {
+    log("今日坊市无适合你的破境丹。", "danger");
+    render();
+    return;
+  }
+  if (state.spiritStones < pill.cost) {
+    log(`丹铺掌柜取出「${pill.name}」，开价 ${pill.cost} 灵石。你囊中羞涩，只能作罢。`, "danger");
+    render();
+    return;
+  }
+  add(state, { spiritStones: -pill.cost, worldliness: 1 });
+  addBreakPill(pill.id);
+  log(`你花去 ${pill.cost} 灵石，购得一枚「${pill.name}」。冲击${nextRealm().name}时可增加 ${pill.bonus}% 成功率。`, "gold");
   save();
   render();
 });
