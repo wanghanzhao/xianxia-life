@@ -1136,6 +1136,8 @@ function renderMobileTabs() {
   document.querySelectorAll("[data-mobile-panel-child]").forEach((panel) => {
     panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanelChild === activeMobileTab);
   });
+  document.querySelector(".main-panel")?.classList.toggle("mobile-panel-active", ["action", "log"].includes(activeMobileTab));
+  document.querySelector(".side-panel")?.classList.toggle("mobile-panel-active", ["status", "market", "bag"].includes(activeMobileTab));
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === activeMobileTab);
   });
