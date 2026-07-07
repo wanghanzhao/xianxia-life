@@ -66,6 +66,47 @@ const actionDefs = [
   { id: "breakthrough", name: "尝试突破", desc: "需修为、心境、悟道共同达标。" }
 ];
 
+const sects = {
+  qinglan: {
+    id: "qinglan",
+    name: "青岚宗",
+    alignment: "正道",
+    rank: "外门弟子",
+    title: "青岚宗外门",
+    intro: "青岚宗以剑诀和药园立宗，规矩森严，却能护住低阶弟子。",
+    joinText: "你拜入青岚宗，成为外门弟子。宗门玉牌入手，从此山门有名，行事也多了规矩。"
+  },
+  bloodriver: {
+    id: "bloodriver",
+    name: "血河教",
+    alignment: "魔道",
+    rank: "记名弟子",
+    title: "血河教记名",
+    intro: "血河教行事狠辣，讲究弱肉强食。资源来得快，反噬也来得快。",
+    joinText: "你收下血河令，成了血河教记名弟子。魔门不问来处，只看你够不够狠。"
+  }
+};
+
+const sectActionDefs = {
+  wanderer: actionDefs,
+  qinglan: [
+    { id: "sectMission", name: "宗门任务", desc: "巡山除妖，得贡献与资源。" },
+    { id: "sectTeach", name: "师门请教", desc: "消耗贡献，增长悟道心境。" },
+    { id: "herbGarden", name: "药园值守", desc: "看守药园，可能得灵草丹药。" },
+    { id: "sectTrial", name: "门内小比", desc: "与同门切磋，涨战力声望。" },
+    { id: "travel", name: "外出历练", desc: "奉令下山，仍会遇见机缘。" },
+    { id: "breakthrough", name: "尝试突破", desc: "可借宗门根基冲关。" }
+  ],
+  bloodriver: [
+    { id: "demonTrial", name: "魔窟试炼", desc: "高风险换修为、战力与贡献。" },
+    { id: "blackMarket", name: "黑市交易", desc: "以贡献和灵石换稀缺资源。" },
+    { id: "raidTreasure", name: "夺宝伏击", desc: "收益很高，也易受伤结仇。" },
+    { id: "hideCultivate", name: "避祸潜修", desc: "避开追杀，压制心魔。" },
+    { id: "bloodForge", name: "血池炼体", desc: "消耗贡献，涨战力修为。" },
+    { id: "breakthrough", name: "尝试突破", desc: "借魔功强行冲关。" }
+  ]
+};
+
 const encounters = {
   travel: [
     {
@@ -529,6 +570,9 @@ const defaultState = {
   breakPills: {},
   goods: {},
   marketTrend: 0,
+  sectId: null,
+  sectContribution: 0,
+  sectReputation: 0,
   traits: [],
   inventory: [],
   pendingChoice: null,
@@ -553,6 +597,8 @@ function add(target, patch) {
   target.seclusionFatigue = clamp(target.seclusionFatigue, 0, 10);
   target.spiritStones = Math.max(0, target.spiritStones);
   target.cultivation = Math.max(0, target.cultivation);
+  target.sectContribution = Math.max(0, target.sectContribution ?? 0);
+  target.sectReputation = Math.max(0, target.sectReputation ?? 0);
 }
 
 function addBreakPill(pillId, amount = 1) {
@@ -600,6 +646,19 @@ function marketLabel() {
 
 function goodsCount() {
   return Object.values(state.goods).reduce((sum, amount) => sum + amount, 0);
+}
+
+function currentSect() {
+  return state?.sectId ? sects[state.sectId] : null;
+}
+
+function identityLabel() {
+  const sect = currentSect();
+  return sect ? sect.title : "散修";
+}
+
+function actionList() {
+  return sectActionDefs[state.sectId ?? "wanderer"] ?? actionDefs;
 }
 
 function clamp(value, min, max) {
@@ -743,6 +802,11 @@ function doAction(action) {
       return;
     }
     const baseGain = gainCultivation("travel");
+    if (maybeOpenSectInvitation("travel", baseGain)) {
+      save();
+      render();
+      return;
+    }
     openEncounter("travel", baseGain);
   }
 
@@ -754,6 +818,11 @@ function doAction(action) {
       return;
     }
     const baseGain = gainCultivation("dungeon");
+    if (maybeOpenSectInvitation("dungeon", baseGain)) {
+      save();
+      render();
+      return;
+    }
     openEncounter("dungeon", baseGain);
   }
 
@@ -777,6 +846,11 @@ function doAction(action) {
       return;
     }
     const baseGain = gainCultivation("social");
+    if (maybeOpenSectInvitation("social", baseGain)) {
+      save();
+      render();
+      return;
+    }
     openEncounter("social", baseGain);
   }
 
@@ -784,9 +858,103 @@ function doAction(action) {
     attemptBreakthrough();
   }
 
+  if (action === "sectMission") {
+    doSectMission();
+  }
+
+  if (action === "sectTeach") {
+    doSectTeach();
+  }
+
+  if (action === "herbGarden") {
+    doHerbGarden();
+  }
+
+  if (action === "sectTrial") {
+    doSectTrial();
+  }
+
+  if (action === "demonTrial") {
+    doDemonTrial();
+  }
+
+  if (action === "blackMarket") {
+    doBlackMarket();
+  }
+
+  if (action === "raidTreasure") {
+    doRaidTreasure();
+  }
+
+  if (action === "hideCultivate") {
+    doHideCultivate();
+  }
+
+  if (action === "bloodForge") {
+    doBloodForge();
+  }
+
   checkRandomCalamity();
   save();
   render();
+}
+
+function maybeOpenSectInvitation(kind, baseGain = 0) {
+  if (currentSect() || state.realm < 1) return false;
+  const chanceMap = { travel: 18, dungeon: 24, social: 16 };
+  if (roll(1, 100) > (chanceMap[kind] ?? 0) + Math.floor(state.luck / 3)) return false;
+  openSectInvitation(kind, baseGain);
+  return true;
+}
+
+function openSectInvitation(kind, baseGain = 0) {
+  const hook = {
+    travel: "你下山行走时，在一处临时坊市遇见青岚宗执事与血河教使者暗中争人。",
+    dungeon: "你从秘境边缘带伤而出，恰被两方修士看见。青岚宗看中你的谨慎，血河教看中你的狠劲。",
+    social: "一次论道后，有人将你的名字递入山门。正道与魔道都向你抛出了一线机会。"
+  }[kind] ?? "两方势力同时注意到了你。";
+  const gainText = baseGain > 0 ? `此前行走亦让你修为增长 ${baseGain}。` : "";
+  state.pendingChoice = {
+    kind: "sectInvitation",
+    title: "山门抉择",
+    text: `${hook}${gainText} 此事未必是福，却足以改变你往后的修行路。`,
+    choices: [
+      {
+        label: "拜入青岚宗",
+        hint: "正道宗门，贡献换资源，较稳",
+        type: "gold",
+        result: sects.qinglan.joinText,
+        apply: () => joinSect("qinglan")
+      },
+      {
+        label: "收下血河令",
+        hint: "魔道路线，收益快，反噬重",
+        type: "danger",
+        result: sects.bloodriver.joinText,
+        apply: () => joinSect("bloodriver")
+      },
+      {
+        label: "仍作散修",
+        hint: "自由无拘，但资源仍靠自己挣",
+        type: "",
+        result: "你没有接任何令牌。山门虽好，却未必容得下你的自在。",
+        apply: () => add(state, { mind: 4, worldliness: 1 })
+      }
+    ]
+  };
+  log(`你遇见了「山门抉择」。${state.pendingChoice.text}`, "gold");
+}
+
+function joinSect(sectId) {
+  const sect = sects[sectId];
+  if (!sect) return;
+  state.sectId = sectId;
+  state.sectContribution = 20;
+  state.sectReputation = 1;
+  if (!state.traits.includes(sect.title)) state.traits.push(sect.title);
+  add(state, sectId === "qinglan"
+    ? { mind: 4, worldliness: 2, spiritStones: 40 }
+    : { power: 4, cultivation: 24, mind: -3, spiritStones: 30 });
 }
 
 function openEncounter(kind, baseGain = 0) {
@@ -855,6 +1023,10 @@ function materializeChoice(blueprint) {
 }
 
 function applyChoice(choice) {
+  if (choice.apply) {
+    choice.apply(state);
+    return choice.practiceGain ?? 0;
+  }
   if (choice.deathChance && deadlyRoll(state, choice.deathChance)) {
     die(state, "你终究没能扛过这场劫数。修行路上，从不缺无名白骨。");
     return 0;
@@ -896,6 +1068,111 @@ function gainCultivation(source, choice = null) {
   gain = Math.max(1, Math.floor(gain * realmFactor));
   state.cultivation += gain;
   return gain;
+}
+
+function doSectMission() {
+  passYears(1);
+  if (state.ended) return;
+  const injury = roll(0, 16);
+  const gain = gainCultivation("social");
+  add(state, {
+    sectContribution: roll(16, 28),
+    sectReputation: 1,
+    spiritStones: roll(18, 46),
+    power: roll(1, 4),
+    health: -injury
+  });
+  const danger = injury > 10 ? "途中遭妖兽反扑，挂了些彩。" : "一路尚算顺遂。";
+  log(`你接下青岚宗巡山除妖任务，清剿山道邪祟，得宗门贡献，修为增长 ${gain}。${danger}`, injury > 10 ? "danger" : "gold");
+}
+
+function doSectTeach() {
+  if (state.sectContribution < 18) {
+    log("你贡献不足，执事只让你先去做些宗门事务。", "danger");
+    return;
+  }
+  passYears(1);
+  if (state.ended) return;
+  add(state, { sectContribution: -18, dao: roll(2, 5), mind: roll(5, 10), insight: roll(0, 1), seclusionFatigue: -2 });
+  log("你以贡献换得师门长老半日指点，往日关隘忽然明白了几分。", "gold");
+}
+
+function doHerbGarden() {
+  passYears(1);
+  if (state.ended) return;
+  add(state, { sectContribution: roll(10, 18), mind: roll(2, 6), pills: roll(0, 1), spiritStones: roll(8, 22) });
+  if (roll(1, 100) <= 38 + state.luck) addGood("spiritHerb", roll(1, 2));
+  log("你在青岚宗药园值守一年，辨识灵草、驱赶灵虫，得了些贡献与药香余泽。", "gold");
+}
+
+function doSectTrial() {
+  passYears(1);
+  if (state.ended) return;
+  const won = roll(1, 100) <= 42 + state.power + state.realm * 5;
+  add(state, {
+    power: won ? roll(4, 8) : roll(1, 4),
+    sectContribution: won ? 26 : 10,
+    sectReputation: won ? 2 : 1,
+    mind: won ? 4 : -2,
+    health: won ? -roll(0, 8) : -roll(6, 18)
+  });
+  log(won ? "门内小比上你连胜数场，外门执事终于记住了你的名字。" : "门内小比你败于同门剑下，虽有不甘，也看清了自身短板。", won ? "gold" : "danger");
+}
+
+function doDemonTrial() {
+  passYears(1);
+  if (state.ended) return;
+  if (deadlyRoll(state, 22)) {
+    die(state, "魔窟试炼中血雾倒卷，你没能走出那道石门。");
+    return;
+  }
+  const gain = gainCultivation("dungeon");
+  add(state, { sectContribution: roll(20, 36), sectReputation: 1, power: roll(4, 9), mind: -roll(4, 10), health: -roll(12, 28) });
+  log(`你入魔窟试炼，与残魂妖影厮杀一夜，修为增长 ${gain}，也染了一身血煞。`, "danger");
+}
+
+function doBlackMarket() {
+  passYears(1);
+  if (state.ended) return;
+  if (state.spiritStones >= 70) {
+    add(state, { spiritStones: -70, sectContribution: roll(8, 16), pills: 1, worldliness: 2 });
+    if (roll(1, 100) <= 28 + state.luck) addBreakPill(pickMarketPill()?.id ?? "qi");
+    log("你借血河教暗线进入黑市，花灵石换来丹药与一份人情。", "gold");
+    return;
+  }
+  add(state, { sectContribution: roll(8, 18), worldliness: 2, mind: -3 });
+  log("你囊中灵石不足，只替黑市牵线跑腿，换了些魔门贡献。", "");
+}
+
+function doRaidTreasure() {
+  passYears(1);
+  if (state.ended) return;
+  if (deadlyRoll(state, 18)) {
+    die(state, "你伏击夺宝时撞上硬茬，被对方反杀于荒岭。");
+    return;
+  }
+  add(state, { spiritStones: roll(65, 150), sectContribution: roll(12, 24), power: roll(3, 7), health: -roll(12, 34), mind: -roll(2, 8) });
+  if (roll(1, 100) <= 45) addGood(pick(["manual", "beastCore", "spiritOre"]), 1);
+  log("你设伏夺宝，抢得一批灵石与货品。此事无人明说，但血河教内多看了你一眼。", "danger");
+}
+
+function doHideCultivate() {
+  const baseGain = gainCultivation("cultivate");
+  const extraGain = roll(12, 28);
+  add(state, { mind: roll(3, 8), health: roll(2, 8), seclusionFatigue: -2, cultivation: extraGain });
+  passYears(1);
+  log(`你避入荒山潜修，压下血煞反噬，修为增长 ${baseGain + extraGain}。`);
+}
+
+function doBloodForge() {
+  if (state.sectContribution < 24) {
+    log("血池炼体需魔门贡献 24，你暂时没有资格入池。", "danger");
+    return;
+  }
+  passYears(1);
+  if (state.ended) return;
+  add(state, { sectContribution: -24, power: roll(8, 14), cultivation: roll(32, 72), health: -roll(8, 22), mind: -roll(5, 12) });
+  log("你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截。", "danger");
 }
 
 function attemptBreakthrough() {
@@ -1026,6 +1303,9 @@ function normalizeState(saved) {
     inventory: saved.inventory ?? [],
     breakPills: saved.breakPills ?? {},
     goods: saved.goods ?? {},
+    sectId: saved.sectId ?? null,
+    sectContribution: saved.sectContribution ?? 0,
+    sectReputation: saved.sectReputation ?? 0,
     marketTrend: saved.marketTrend ?? 0,
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
     log: saved.log ?? []
@@ -1064,9 +1344,9 @@ function render() {
   if (!state) return;
 
   $("heroName").textContent = state.name;
-  $("heroTitle").textContent = realm().name;
+  $("heroTitle").textContent = `${realm().name} · ${identityLabel()}`;
   $("detailHeroName").textContent = state.name;
-  $("detailHeroTitle").textContent = realm().name;
+  $("detailHeroTitle").textContent = `${realm().name} · ${identityLabel()}`;
   $("ageText").textContent = `${state.age} 岁 / 寿元 ${state.life}`;
   $("fateText").textContent = state.ended ? "尘缘已尽" : `${nextRealm()?.name ?? "飞升"}在望`;
 
@@ -1079,6 +1359,7 @@ function render() {
   renderMarket();
 
   const statHtml = [
+    ["身份", identityLabel()],
     ["境界", realm().name],
     ["修为", `${state.cultivation}/${realm().need}`],
     ["气血", state.health],
@@ -1089,7 +1370,7 @@ function render() {
   $("detailStatList").innerHTML = statHtml;
 
   $("mobileSummary").innerHTML = [
-    ["境界", realm().name],
+    ["身份", identityLabel()],
     ["修为", `${state.cultivation}/${realm().need}`],
     ["气血", state.health],
     ["灵石", state.spiritStones]
@@ -1103,6 +1384,7 @@ function render() {
     ["灵石", state.spiritStones],
     ["清心丹", state.pills],
     ["破境丹", Object.values(state.breakPills).reduce((sum, amount) => sum + amount, 0)],
+    ["宗门贡献", state.sectContribution],
     ["货品", goodsCount()],
     ["尘缘", state.worldliness],
     ["行情", marketLabel()],
@@ -1111,7 +1393,7 @@ function render() {
   $("resourceGrid").innerHTML = resourceHtml;
   $("detailResourceGrid").innerHTML = resourceHtml;
 
-  $("actions").innerHTML = actionDefs.map((action) => `
+  $("actions").innerHTML = actionList().map((action) => `
     <button data-action="${action.id}" type="button" ${state.ended ? "disabled" : ""}>
       ${action.name}<br><small>${action.desc}</small>
     </button>
