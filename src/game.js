@@ -1135,14 +1135,21 @@ function renderMarket() {
       const price = marketPrice(good);
       return `<div class="market-row">
         <div><strong>${good.name} x${amount}</strong><span>${good.desc}</span></div>
-        <button data-sell-good="${good.id}" type="button">卖 ${price}</button>
+        <div class="market-actions">
+          <button data-sell-good="${good.id}" type="button">卖1 ${price}</button>
+          ${amount > 1 ? `<button data-sell-good-all="${good.id}" type="button">全卖 ${price * amount}</button>` : ""}
+        </div>
       </div>`;
     });
   const pillRows = [
-    state.pills > 0 ? `<div class="market-row"><div><strong>清心丹 x${state.pills}</strong><span>回血稳心，可留可卖。</span></div><button data-sell-pill="qingxin" type="button">卖 45</button></div>` : "",
+    state.pills > 0 ? `<div class="market-row"><div><strong>清心丹 x${state.pills}</strong><span>回血稳心，可留可卖。</span></div><div class="market-actions"><button data-sell-pill="qingxin" type="button">卖1 45</button>${state.pills > 1 ? `<button data-sell-pill-all="qingxin" type="button">全卖 ${state.pills * 45}</button>` : ""}</div></div>` : "",
     ...breakthroughPills
       .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
-      .map((pill) => `<div class="market-row"><div><strong>${pill.name} x${state.breakPills[pill.id]}</strong><span>冲击${realms[pill.targetRealm].name} +${pill.bonus}%。</span></div><button data-sell-break-pill="${pill.id}" type="button">卖 ${Math.floor(pill.cost * 0.62)}</button></div>`)
+      .map((pill) => {
+        const amount = state.breakPills[pill.id];
+        const price = Math.floor(pill.cost * 0.62);
+        return `<div class="market-row"><div><strong>${pill.name} x${amount}</strong><span>冲击${realms[pill.targetRealm].name} +${pill.bonus}%。</span></div><div class="market-actions"><button data-sell-break-pill="${pill.id}" type="button">卖1 ${price}</button>${amount > 1 ? `<button data-sell-break-pill-all="${pill.id}" type="button">全卖 ${price * amount}</button>` : ""}</div></div>`;
+      })
   ].filter(Boolean);
   const rows = [...goodsRows, ...pillRows];
   $("marketPanel").innerHTML = rows.length
@@ -1195,58 +1202,39 @@ function renderBreakNeed() {
     <div class="need-line ${pill ? "ok" : ""}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>`;
 }
 
-function sellGood(goodId) {
+function sellGood(goodId, amount = 1) {
   const good = goodById(goodId);
   if (!good || !state.goods[goodId]) return;
   const price = marketPrice(good);
-  removeGood(goodId);
-  add(state, { spiritStones: price, worldliness: 1 });
-  log(`你在交易行售出一份「${good.name}」，得 ${price} 灵石。`, "gold");
+  const sold = removeGood(goodId, amount);
+  add(state, { spiritStones: price * sold, worldliness: Math.ceil(sold / 2) });
+  log(`你在交易行售出「${good.name}」x${sold}，得 ${price * sold} 灵石。`, "gold");
   save();
   render();
 }
 
-function sellAllGoods() {
-  let total = 0;
-  let count = 0;
-  tradeGoods.forEach((good) => {
-    const amount = state.goods[good.id] ?? 0;
-    if (!amount) return;
-    total += marketPrice(good) * amount;
-    count += amount;
-    delete state.goods[good.id];
-  });
-  if (!count) {
-    log("你摊开行囊，并没有可售的杂物。", "danger");
-    render();
-    return;
-  }
-  add(state, { spiritStones: total, worldliness: Math.ceil(count / 3) });
-  log(`你将 ${count} 件杂物一并售出，换得 ${total} 灵石。`, "gold");
-  save();
-  render();
-}
-
-function sellQingxinPill() {
+function sellQingxinPill(amount = 1) {
   if (state.pills <= 0) {
     log("你并无多余清心丹可卖。", "danger");
     render();
     return;
   }
-  state.pills -= 1;
-  add(state, { spiritStones: 45, worldliness: 1 });
-  log("你售出一枚清心丹，得 45 灵石。", "gold");
+  const sold = Math.min(state.pills, amount);
+  state.pills -= sold;
+  add(state, { spiritStones: sold * 45, worldliness: Math.ceil(sold / 2) });
+  log(`你售出清心丹 x${sold}，得 ${sold * 45} 灵石。`, "gold");
   save();
   render();
 }
 
-function sellBreakPill(pillId) {
+function sellBreakPill(pillId, amount = 1) {
   const pill = breakthroughPills.find((item) => item.id === pillId);
   if (!pill || !state.breakPills[pillId]) return;
   const price = Math.floor(pill.cost * 0.62);
-  removeBreakPill(pillId);
-  add(state, { spiritStones: price, worldliness: 1 });
-  log(`你售出一枚「${pill.name}」，得 ${price} 灵石。`, "gold");
+  const sold = Math.min(state.breakPills[pillId], amount);
+  for (let index = 0; index < sold; index += 1) removeBreakPill(pillId);
+  add(state, { spiritStones: price * sold, worldliness: Math.ceil(sold / 2) });
+  log(`你售出「${pill.name}」x${sold}，得 ${price * sold} 灵石。`, "gold");
   save();
   render();
 }
@@ -1301,13 +1289,31 @@ $("marketPanel").addEventListener("click", (event) => {
     sellGood(sellGoodButton.dataset.sellGood);
     return;
   }
+  const sellGoodAllButton = event.target.closest("[data-sell-good-all]");
+  if (sellGoodAllButton) {
+    sellGood(sellGoodAllButton.dataset.sellGoodAll, state.goods[sellGoodAllButton.dataset.sellGoodAll]);
+    return;
+  }
   const sellPillButton = event.target.closest("[data-sell-pill]");
   if (sellPillButton) {
     sellQingxinPill();
     return;
   }
+  const sellPillAllButton = event.target.closest("[data-sell-pill-all]");
+  if (sellPillAllButton) {
+    sellQingxinPill(state.pills);
+    return;
+  }
   const sellBreakPillButton = event.target.closest("[data-sell-break-pill]");
-  if (sellBreakPillButton) sellBreakPill(sellBreakPillButton.dataset.sellBreakPill);
+  if (sellBreakPillButton) {
+    sellBreakPill(sellBreakPillButton.dataset.sellBreakPill);
+    return;
+  }
+  const sellBreakPillAllButton = event.target.closest("[data-sell-break-pill-all]");
+  if (sellBreakPillAllButton) {
+    const pillId = sellBreakPillAllButton.dataset.sellBreakPillAll;
+    sellBreakPill(pillId, state.breakPills[pillId]);
+  }
 });
 $("usePillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
@@ -1361,10 +1367,6 @@ $("buyBreakPillBtn").addEventListener("click", () => {
 $("studyManualBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
   studyManual();
-});
-$("sellAllBtn").addEventListener("click", () => {
-  if (!state || state.ended) return;
-  sellAllGoods();
 });
 $("restWithStoneBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
