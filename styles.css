@@ -304,6 +304,10 @@ input {
   background: white;
 }
 
+.break-card-main {
+  margin: 0 0 14px;
+}
+
 .break-card h3 {
   margin: 0 0 10px;
   font-size: 15px;
@@ -333,12 +337,13 @@ input {
 
 .year-card {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) 92px;
   gap: 12px;
   margin-bottom: 14px;
 }
 
-.year-card > div {
+.year-card > div,
+.year-detail-btn {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
@@ -347,6 +352,26 @@ input {
 
 .year-card strong {
   font-size: 24px;
+}
+
+.year-detail-btn {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  width: 100%;
+  color: var(--ink);
+  text-align: left;
+}
+
+.year-detail-btn span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.year-detail-btn strong {
+  color: var(--jade);
+  font-size: 20px;
 }
 
 .action-board {
@@ -808,6 +833,10 @@ input {
     display: block;
   }
 
+  .year-card.mobile-panel-active {
+    display: grid;
+  }
+
   .main-panel.mobile-panel-active,
   .side-panel.mobile-panel-active {
     display: block;
@@ -870,12 +899,33 @@ input {
     margin-top: 12px;
   }
 
+  .break-card-main {
+    margin: 0 0 10px;
+  }
+
+  .year-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) 76px;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
   .year-card > div {
     padding: 12px;
   }
 
   .year-card strong {
     font-size: 20px;
+  }
+
+  .year-detail-btn {
+    min-height: 74px;
+    width: auto;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .year-detail-btn strong {
+    font-size: 18px;
   }
 
   .action-board.mobile-panel-active {
@@ -987,7 +1037,7 @@ input {
     bottom: 0;
     z-index: 18;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0;
     border-top: 1px solid var(--line);
     background: rgba(246, 241, 231, 0.98);
