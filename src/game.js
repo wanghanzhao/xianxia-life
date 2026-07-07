@@ -538,6 +538,7 @@ const defaultState = {
 
 let state = normalizeState(load());
 let selectedOrigin = origins[0].id;
+let activeMobileTab = "action";
 
 const $ = (id) => document.getElementById(id);
 
@@ -1058,6 +1059,7 @@ function render() {
 
   $("creation").classList.toggle("hidden", !!state);
   $("game").classList.toggle("hidden", !state);
+  $("mobileTabs").classList.toggle("hidden", !state);
 
   if (!state) return;
 
@@ -1124,6 +1126,19 @@ function render() {
     ...breakPillItems
   ];
   $("inventory").innerHTML = inventoryItems.length ? inventoryItems.join("") : `<span class="pill">空空如也</span>`;
+  renderMobileTabs();
+}
+
+function renderMobileTabs() {
+  document.querySelectorAll("[data-mobile-panel]").forEach((panel) => {
+    panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanel === activeMobileTab);
+  });
+  document.querySelectorAll("[data-mobile-panel-child]").forEach((panel) => {
+    panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanelChild === activeMobileTab);
+  });
+  document.querySelectorAll("[data-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.tab === activeMobileTab);
+  });
 }
 
 function renderMarket() {
@@ -1282,6 +1297,13 @@ $("choiceOptions").addEventListener("click", (event) => {
   const button = event.target.closest("[data-choice]");
   if (!button) return;
   chooseOption(Number(button.dataset.choice));
+});
+$("mobileTabs").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-tab]");
+  if (!button) return;
+  activeMobileTab = button.dataset.tab;
+  renderMobileTabs();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 $("marketPanel").addEventListener("click", (event) => {
   const sellGoodButton = event.target.closest("[data-sell-good]");
