@@ -482,6 +482,10 @@ input {
   font-size: 13px;
 }
 
+.mobile-tabs {
+  display: none;
+}
+
 @media (max-width: 920px) {
   body {
     background-attachment: fixed;
@@ -544,7 +548,7 @@ input {
 
   .app {
     width: 100%;
-    padding: 0;
+    padding: 0 0 76px;
   }
 
   .topbar,
@@ -602,6 +606,23 @@ input {
     margin-top: 0;
     padding: 10px;
     background: rgba(246, 241, 231, 0.96);
+  }
+
+  .stats-panel,
+  .main-panel,
+  .side-panel,
+  .log-panel,
+  [data-mobile-panel-child] {
+    display: none;
+  }
+
+  .mobile-panel-active {
+    display: block;
+  }
+
+  .main-panel.mobile-panel-active,
+  .side-panel.mobile-panel-active {
+    display: block;
   }
 
   .stats-panel,
@@ -732,5 +753,36 @@ input {
 
   .choice-options button {
     min-height: 68px;
+  }
+
+  .mobile-tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 18;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--line);
+    background: rgba(246, 241, 231, 0.98);
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.16);
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-tabs button {
+    min-height: 56px;
+    border: 0;
+    border-radius: 0;
+    padding: 8px 4px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .mobile-tabs button.active {
+    color: white;
+    background: var(--jade);
   }
 }
