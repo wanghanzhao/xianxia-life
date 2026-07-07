@@ -538,7 +538,7 @@ const defaultState = {
 
 let state = normalizeState(load());
 let selectedOrigin = origins[0].id;
-let activeMobileTab = "action";
+let activeMobileTab = "cultivation";
 
 const $ = (id) => document.getElementById(id);
 
@@ -1065,24 +1065,37 @@ function render() {
 
   $("heroName").textContent = state.name;
   $("heroTitle").textContent = realm().name;
+  $("detailHeroName").textContent = state.name;
+  $("detailHeroTitle").textContent = realm().name;
   $("ageText").textContent = `${state.age} 岁 / 寿元 ${state.life}`;
   $("fateText").textContent = state.ended ? "尘缘已尽" : `${nextRealm()?.name ?? "飞升"}在望`;
 
   const progress = Math.min(100, Math.floor((state.cultivation / realm().need) * 100));
   $("cultivationBar").style.width = `${progress}%`;
   $("mindBar").style.width = `${state.mind}%`;
+  $("detailCultivationBar").style.width = `${progress}%`;
+  $("detailMindBar").style.width = `${state.mind}%`;
   renderBreakNeed();
   renderMarket();
 
-  $("statList").innerHTML = [
+  const statHtml = [
     ["境界", realm().name],
     ["修为", `${state.cultivation}/${realm().need}`],
     ["气血", state.health],
     ["心境", state.mind],
     ["悟道", `${state.dao}/${realm().insightNeed}`]
   ].map(([label, value]) => `<div class="stat"><span>${label}</span><strong>${value}</strong></div>`).join("");
+  $("statList").innerHTML = statHtml;
+  $("detailStatList").innerHTML = statHtml;
 
-  $("resourceGrid").innerHTML = [
+  $("mobileSummary").innerHTML = [
+    ["境界", realm().name],
+    ["修为", `${state.cultivation}/${realm().need}`],
+    ["气血", state.health],
+    ["灵石", state.spiritStones]
+  ].map(([label, value]) => `<div class="summary-item"><span>${label}</span><strong>${value}</strong></div>`).join("");
+
+  const resourceHtml = [
     ["资质", state.talent],
     ["悟性", state.insight],
     ["福缘", state.luck],
@@ -1095,6 +1108,8 @@ function render() {
     ["行情", marketLabel()],
     ["闭关疲惫", state.seclusionFatigue]
   ].map(([label, value]) => `<div class="resource"><span>${label}</span><strong>${value}</strong></div>`).join("");
+  $("resourceGrid").innerHTML = resourceHtml;
+  $("detailResourceGrid").innerHTML = resourceHtml;
 
   $("actions").innerHTML = actionDefs.map((action) => `
     <button data-action="${action.id}" type="button" ${state.ended ? "disabled" : ""}>
@@ -1130,17 +1145,31 @@ function render() {
 }
 
 function renderMobileTabs() {
+  if (activeMobileTab === "details") {
+    activeMobileTab = "cultivation";
+    openDetailModal();
+  }
   document.querySelectorAll("[data-mobile-panel]").forEach((panel) => {
     panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanel === activeMobileTab);
   });
   document.querySelectorAll("[data-mobile-panel-child]").forEach((panel) => {
     panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanelChild === activeMobileTab);
   });
-  document.querySelector(".main-panel")?.classList.toggle("mobile-panel-active", ["action", "log"].includes(activeMobileTab));
-  document.querySelector(".side-panel")?.classList.toggle("mobile-panel-active", ["status", "market", "bag"].includes(activeMobileTab));
+  document.querySelector(".main-panel")?.classList.toggle("mobile-panel-active", activeMobileTab === "cultivation");
+  document.querySelector(".side-panel")?.classList.toggle("mobile-panel-active", activeMobileTab === "market");
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === activeMobileTab);
   });
+}
+
+function openDetailModal() {
+  $("detailModal").classList.remove("hidden");
+  $("detailModal").setAttribute("aria-hidden", "false");
+}
+
+function closeDetailModal() {
+  $("detailModal").classList.add("hidden");
+  $("detailModal").setAttribute("aria-hidden", "true");
 }
 
 function renderMarket() {
@@ -1197,7 +1226,9 @@ function renderBreakNeed() {
   const current = realm();
   const target = nextRealm();
   if (!target) {
-    $("breakNeed").innerHTML = `<div class="need-line ok"><span>前路</span><strong>可问飞升</strong></div>`;
+    const html = `<div class="need-line ok"><span>前路</span><strong>可问飞升</strong></div>`;
+    $("breakNeed").innerHTML = html;
+    $("detailBreakNeed").innerHTML = html;
     return;
   }
 
@@ -1213,10 +1244,12 @@ function renderBreakNeed() {
   }).join("");
   const pill = bestBreakPillForTarget();
   const pillName = pill ? `${pill.name} +${pill.bonus}%` : "无";
-  $("breakNeed").innerHTML = `${needHtml}
+  const html = `${needHtml}
     <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
     <div class="need-line ${pill ? "ok" : "bad"}"><span>可用破境丹</span><strong>${pillName}</strong></div>
     <div class="need-line ${pill ? "ok" : ""}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>`;
+  $("breakNeed").innerHTML = html;
+  $("detailBreakNeed").innerHTML = html;
 }
 
 function sellGood(goodId, amount = 1) {
@@ -1303,9 +1336,20 @@ $("choiceOptions").addEventListener("click", (event) => {
 $("mobileTabs").addEventListener("click", (event) => {
   const button = event.target.closest("[data-tab]");
   if (!button) return;
+  if (button.dataset.tab === "details") {
+    openDetailModal();
+    return;
+  }
   activeMobileTab = button.dataset.tab;
   renderMobileTabs();
   window.scrollTo({ top: 0, behavior: "smooth" });
+});
+$("closeDetailBtn").addEventListener("click", closeDetailModal);
+$("detailModal").addEventListener("click", (event) => {
+  if (event.target === $("detailModal")) closeDetailModal();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeDetailModal();
 });
 $("marketPanel").addEventListener("click", (event) => {
   const sellGoodButton = event.target.closest("[data-sell-good]");
