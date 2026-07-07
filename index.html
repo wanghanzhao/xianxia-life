@@ -32,7 +32,7 @@
       </section>
 
       <section id="game" class="game hidden">
-        <aside class="stats-panel" data-mobile-panel="status">
+        <aside class="stats-panel" data-mobile-panel="details">
           <div class="portrait">
             <div class="sigil">道</div>
             <div>
@@ -57,8 +57,10 @@
           </div>
         </aside>
 
-        <section class="main-panel" data-mobile-panel="action">
-          <div class="year-card" data-mobile-panel-child="action">
+        <section class="main-panel" data-mobile-panel="cultivation">
+          <div class="mobile-summary" id="mobileSummary" data-mobile-panel-child="cultivation"></div>
+
+          <div class="year-card" data-mobile-panel-child="cultivation">
             <div>
               <p class="eyebrow">当前年岁</p>
               <strong id="ageText">16 岁</strong>
@@ -69,9 +71,9 @@
             </div>
           </div>
 
-          <div class="actions" id="actions" data-mobile-panel-child="action"></div>
+          <div class="actions" id="actions" data-mobile-panel-child="cultivation"></div>
 
-          <article class="log-panel" data-mobile-panel="log">
+          <article class="log-panel" data-mobile-panel-child="cultivation">
             <div class="log-head">
               <h2>修行纪年</h2>
               <button id="clearLogBtn" type="button">清空</button>
@@ -81,7 +83,7 @@
         </section>
 
         <aside class="side-panel" data-mobile-panel="market">
-          <div data-mobile-panel-child="status">
+          <div class="desktop-only" data-mobile-panel-child="details">
             <h2>资源与资质</h2>
             <div id="resourceGrid" class="resource-grid"></div>
           </div>
@@ -96,7 +98,7 @@
             <h2>交易行</h2>
             <div id="marketPanel" class="market-panel"></div>
           </div>
-          <div data-mobile-panel-child="bag">
+          <div data-mobile-panel-child="market">
             <h2>机缘与负累</h2>
             <div id="traits" class="traits"></div>
             <h2>行囊</h2>
@@ -106,11 +108,9 @@
       </section>
 
       <nav id="mobileTabs" class="mobile-tabs hidden" aria-label="移动端页签">
-        <button data-tab="status" type="button">状态</button>
-        <button data-tab="action" type="button">行动</button>
-        <button data-tab="log" type="button">纪年</button>
+        <button data-tab="cultivation" type="button">修行</button>
         <button data-tab="market" type="button">坊市</button>
-        <button data-tab="bag" type="button">行囊</button>
+        <button data-tab="details" type="button">详细</button>
       </nav>
 
       <article id="choicePanel" class="choice-panel choice-float hidden">
@@ -119,8 +119,43 @@
         <p id="choiceText"></p>
         <div id="choiceOptions" class="choice-options"></div>
       </article>
+
+      <div id="detailModal" class="modal hidden" aria-hidden="true">
+        <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+          <div class="modal-head">
+            <h2 id="detailTitle">详细状态</h2>
+            <button id="closeDetailBtn" type="button">关闭</button>
+          </div>
+          <div class="modal-body">
+            <div class="portrait modal-portrait">
+              <div class="sigil">道</div>
+              <div>
+                <h2 id="detailHeroName">青玄</h2>
+                <p id="detailHeroTitle">凡人</p>
+              </div>
+            </div>
+            <div id="detailStatList" class="stat-list"></div>
+            <div class="bars">
+              <div>
+                <span>修为</span>
+                <div class="bar"><i id="detailCultivationBar"></i></div>
+              </div>
+              <div>
+                <span>心境</span>
+                <div class="bar"><i id="detailMindBar"></i></div>
+              </div>
+            </div>
+            <div class="break-card">
+              <h3>破境条件</h3>
+              <div id="detailBreakNeed"></div>
+            </div>
+            <h2>资源与资质</h2>
+            <div id="detailResourceGrid" class="resource-grid"></div>
+          </div>
+        </section>
+      </div>
     </main>
 
-    <script src="./src/game.js?v=20260707-tabs-fix"></script>
+    <script src="./src/game.js?v=20260707-mobile-merge"></script>
   </body>
 </html>
