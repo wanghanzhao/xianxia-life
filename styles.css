@@ -468,6 +468,12 @@ input {
   padding: 8px 10px;
 }
 
+.market-actions {
+  display: grid;
+  gap: 6px;
+  min-width: 82px;
+}
+
 .pill {
   border: 1px solid var(--line);
   border-radius: 999px;
