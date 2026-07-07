@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>尘缘修仙录</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">文字修仙模拟人生</p>
+          <h1>尘缘修仙录</h1>
+        </div>
+        <div class="top-actions">
+          <button id="saveBtn" type="button">存档</button>
+          <button id="newLifeBtn" type="button">转世</button>
+        </div>
+      </section>
+
+      <section id="creation" class="creation">
+        <div class="creation-panel">
+          <h2>投身尘世</h2>
+          <label>
+            道号
+            <input id="nameInput" maxlength="8" value="青玄" />
+          </label>
+          <div class="origin-grid" id="originGrid"></div>
+          <button id="startBtn" class="primary" type="button">入世修行</button>
+        </div>
+      </section>
+
+      <section id="game" class="game hidden">
+        <aside class="stats-panel">
+          <div class="portrait">
+            <div class="sigil">道</div>
+            <div>
+              <h2 id="heroName">青玄</h2>
+              <p id="heroTitle">凡人</p>
+            </div>
+          </div>
+          <div class="stat-list" id="statList"></div>
+          <div class="bars">
+            <div>
+              <span>修为</span>
+              <div class="bar"><i id="cultivationBar"></i></div>
+            </div>
+            <div>
+              <span>心境</span>
+              <div class="bar"><i id="mindBar"></i></div>
+            </div>
+          </div>
+          <div class="break-card">
+            <h3>破境条件</h3>
+            <div id="breakNeed"></div>
+          </div>
+        </aside>
+
+        <section class="main-panel">
+          <div class="year-card">
+            <div>
+              <p class="eyebrow">当前年岁</p>
+              <strong id="ageText">16 岁</strong>
+            </div>
+            <div>
+              <p class="eyebrow">天命</p>
+              <strong id="fateText">未定</strong>
+            </div>
+          </div>
+
+          <div class="actions" id="actions"></div>
+
+          <article class="log-panel">
+            <div class="log-head">
+              <h2>修行纪年</h2>
+              <button id="clearLogBtn" type="button">清空</button>
+            </div>
+            <div id="log" class="log"></div>
+          </article>
+        </section>
+
+        <aside class="side-panel">
+          <h2>资源与资质</h2>
+          <div id="resourceGrid" class="resource-grid"></div>
+          <div class="quick-actions">
+            <button id="usePillBtn" type="button">服用丹药</button>
+            <button id="buyPillBtn" type="button">购买丹药</button>
+            <button id="restWithStoneBtn" type="button">灵石调息</button>
+          </div>
+          <h2>机缘与负累</h2>
+          <div id="traits" class="traits"></div>
+          <h2>行囊</h2>
+          <div id="inventory" class="inventory"></div>
+        </aside>
+      </section>
+
+      <article id="choicePanel" class="choice-panel choice-float hidden">
+        <p class="eyebrow">当下抉择</p>
+        <h2 id="choiceTitle"></h2>
+        <p id="choiceText"></p>
+        <div id="choiceOptions" class="choice-options"></div>
+      </article>
+    </main>
+
+    <script src="./src/game.js"></script>
+  </body>
+</html>
