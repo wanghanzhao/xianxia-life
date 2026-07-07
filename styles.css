@@ -483,8 +483,34 @@ input {
 }
 
 @media (max-width: 920px) {
+  body {
+    background-attachment: fixed;
+  }
+
+  .app {
+    width: min(100% - 20px, 680px);
+    padding: 12px 0 18px;
+  }
+
+  .topbar {
+    min-height: auto;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 26px;
+  }
+
+  .top-actions {
+    flex-shrink: 0;
+  }
+
   .game {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px;
   }
 
   .actions,
@@ -499,5 +525,212 @@ input {
     bottom: 12px;
     width: calc(100vw - 24px);
     max-height: 58vh;
+  }
+
+  .log {
+    height: 320px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    background-position: center top;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .app {
+    width: 100%;
+    padding: 0;
+  }
+
+  .topbar,
+  .game,
+  .creation-panel {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    align-items: flex-start;
+    padding: 12px;
+    background: rgba(246, 241, 231, 0.97);
+  }
+
+  .topbar h1 {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+  }
+
+  .top-actions {
+    gap: 6px;
+  }
+
+  .top-actions button {
+    min-width: 52px;
+    padding: 8px 9px;
+    font-size: 13px;
+  }
+
+  .creation {
+    min-height: calc(100vh - 74px);
+    padding: 10px;
+  }
+
+  .creation-panel {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .origin {
+    min-height: 84px;
+  }
+
+  .game {
+    margin-top: 0;
+    padding: 10px;
+    background: rgba(246, 241, 231, 0.96);
+  }
+
+  .stats-panel,
+  .main-panel,
+  .side-panel {
+    padding: 12px;
+  }
+
+  .portrait {
+    margin-bottom: 12px;
+  }
+
+  .sigil {
+    width: 46px;
+    height: 46px;
+    font-size: 21px;
+  }
+
+  .stat-list,
+  .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat {
+    display: grid;
+    gap: 3px;
+    align-content: center;
+    min-height: 56px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    background: white;
+  }
+
+  .bars {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .break-card {
+    margin-top: 12px;
+  }
+
+  .year-card > div {
+    padding: 12px;
+  }
+
+  .year-card strong {
+    font-size: 20px;
+  }
+
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .actions button {
+    min-height: 76px;
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .actions small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .log-head {
+    padding: 10px 12px;
+  }
+
+  .log-head h2,
+  .side-panel h2,
+  .main-panel h2 {
+    font-size: 20px;
+  }
+
+  .log {
+    height: 300px;
+    padding: 10px;
+  }
+
+  .entry {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .quick-actions button {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .market-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .market-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .market-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .choice-float {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 72vh;
+    border-radius: 8px 8px 0 0;
+    padding: 14px;
+  }
+
+  .choice-options {
+    gap: 8px;
+  }
+
+  .choice-options button {
+    min-height: 68px;
   }
 }
