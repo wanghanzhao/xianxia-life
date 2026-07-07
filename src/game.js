@@ -1690,12 +1690,12 @@ function render() {
   });
   renderChoicePanel();
 
-  $("log").innerHTML = state.log.map((entry) => `
+  $("log").innerHTML = [...state.log].reverse().map((entry) => `
     <div class="entry ${entry.type}">
       <strong>${entry.year}岁</strong> ${entry.text}
     </div>
   `).join("");
-  $("log").scrollTop = $("log").scrollHeight;
+  $("log").scrollTop = 0;
 
   $("traits").innerHTML = state.traits.length
     ? state.traits.map((trait) => `<span class="pill">${trait}</span>`).join("")
@@ -1717,10 +1717,6 @@ function render() {
 }
 
 function renderMobileTabs() {
-  if (activeMobileTab === "details") {
-    activeMobileTab = "cultivation";
-    openDetailModal();
-  }
   document.querySelectorAll("[data-mobile-panel]").forEach((panel) => {
     panel.classList.toggle("mobile-panel-active", panel.dataset.mobilePanel === activeMobileTab);
   });
@@ -1936,15 +1932,12 @@ $("choiceOptions").addEventListener("click", (event) => {
 $("mobileTabs").addEventListener("click", (event) => {
   const button = event.target.closest("[data-tab]");
   if (!button) return;
-  if (button.dataset.tab === "details") {
-    openDetailModal();
-    return;
-  }
   activeMobileTab = button.dataset.tab;
   renderMobileTabs();
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 $("closeDetailBtn").addEventListener("click", closeDetailModal);
+$("detailBtn").addEventListener("click", openDetailModal);
 $("detailModal").addEventListener("click", (event) => {
   if (event.target === $("detailModal")) closeDetailModal();
 });
