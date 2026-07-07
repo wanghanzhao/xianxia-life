@@ -427,6 +427,47 @@ input {
   padding: 9px 10px;
 }
 
+.market-panel {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+
+.market-note,
+.market-empty {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.market-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+}
+
+.market-row strong,
+.market-row span {
+  display: block;
+}
+
+.market-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.market-row button {
+  min-width: 68px;
+  padding: 8px 10px;
+}
+
 .pill {
   border: 1px solid var(--line);
   border-radius: 999px;
