@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260707-world-v3" />
+    <link rel="stylesheet" href="./styles.css?v=20260707-layout-v1" />
   </head>
   <body>
     <main class="app">
@@ -54,10 +54,6 @@
               <div class="bar"><i id="mindBar"></i></div>
             </div>
           </div>
-          <div class="break-card">
-            <h3>破境条件</h3>
-            <div id="breakNeed"></div>
-          </div>
         </aside>
 
         <section class="main-panel" data-mobile-panel="cultivation">
@@ -72,6 +68,15 @@
               <p class="eyebrow">天命</p>
               <strong id="fateText">未定</strong>
             </div>
+            <button id="detailBtn" class="year-detail-btn" type="button">
+              <span>详细</span>
+              <strong>状态</strong>
+            </button>
+          </div>
+
+          <div class="break-card break-card-main" data-mobile-panel-child="cultivation">
+            <h3>破境条件</h3>
+            <div id="breakNeed"></div>
           </div>
 
           <section class="action-board" data-mobile-panel-child="cultivation">
@@ -118,7 +123,6 @@
       <nav id="mobileTabs" class="mobile-tabs hidden" aria-label="移动端页签">
         <button data-tab="cultivation" type="button">修行</button>
         <button data-tab="market" type="button">坊市</button>
-        <button data-tab="details" type="button">详细</button>
       </nav>
 
       <article id="choicePanel" class="choice-panel choice-float hidden">
@@ -167,6 +171,6 @@
       <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     </main>
 
-      <script src="./src/game.js?v=20260707-sect-balance-v1"></script>
+      <script src="./src/game.js?v=20260707-layout-v1"></script>
   </body>
 </html>
