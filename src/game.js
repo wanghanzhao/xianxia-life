@@ -159,19 +159,19 @@ const sects = {
 const sectActionDefs = {
   wanderer: actionDefs,
   qinglan: [
-    { id: "sectMission", name: "宗门任务", desc: "巡山除妖，得贡献与资源。" },
-    { id: "sectTeach", name: "师门请教", desc: "消耗贡献，增长悟道心境。" },
+    { id: "sectMission", name: "宗门任务", desc: "巡山除妖，稳涨修为与贡献。" },
+    { id: "sectTeach", name: "师门请教", desc: "消耗贡献，增长悟道心境与修为。" },
     { id: "herbGarden", name: "药园值守", desc: "看守药园，可能得灵草丹药。" },
-    { id: "sectTrial", name: "门内小比", desc: "与同门切磋，涨战力声望。" },
+    { id: "sectTrial", name: "门内小比", desc: "与同门切磋，涨战力与修为。" },
     { id: "travel", name: "外出历练", desc: "奉令下山，仍会遇见机缘。" },
     { id: "breakthrough", name: "尝试突破", desc: "可借宗门根基冲关。" }
   ],
   bloodriver: [
     { id: "demonTrial", name: "魔窟试炼", desc: "高风险换修为、战力与贡献。" },
-    { id: "blackMarket", name: "黑市交易", desc: "以贡献和灵石换稀缺资源。" },
+    { id: "blackMarket", name: "黑市交易", desc: "以灵石换丹药、情报与悟道。" },
     { id: "raidTreasure", name: "夺宝伏击", desc: "收益很高，也易受伤结仇。" },
-    { id: "hideCultivate", name: "避祸潜修", desc: "避开追杀，压制心魔。" },
-    { id: "bloodForge", name: "血池炼体", desc: "消耗贡献，涨战力修为。" },
+    { id: "hideCultivate", name: "避祸潜修", desc: "避开追杀，压制心魔并补心境。" },
+    { id: "bloodForge", name: "血池炼体", desc: "消耗贡献，涨战力修为，偶悟生死。" },
     { id: "breakthrough", name: "尝试突破", desc: "借魔功强行冲关。" }
   ]
 };
@@ -1261,7 +1261,9 @@ function doSectMission() {
   passYears(1);
   if (state.ended) return;
   const injury = roll(0, 16);
-  const gain = gainCultivation("social");
+  const gain = gainCultivation("travel") + roll(8, 22);
+  const dutyGain = roll(8, 18);
+  state.cultivation += dutyGain;
   add(state, {
     sectContribution: roll(16, 28),
     sectReputation: 1,
@@ -1272,7 +1274,7 @@ function doSectMission() {
   });
   if (roll(1, 100) <= 26 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "bigu"]));
   const danger = injury > 10 ? "途中遭妖兽反扑，挂了些彩。" : "一路尚算顺遂。";
-  log(`你接下青岚宗巡山除妖任务，清剿山道邪祟，得宗门贡献，修为增长 ${gain}。${danger}`, injury > 10 ? "danger" : "gold");
+  log(`你接下青岚宗巡山除妖任务，清剿山道邪祟，得宗门贡献，修为增长 ${gain + dutyGain}。${danger}`, injury > 10 ? "danger" : "gold");
 }
 
 function doSectTeach() {
@@ -1282,14 +1284,15 @@ function doSectTeach() {
   }
   passYears(1);
   if (state.ended) return;
-  add(state, { sectContribution: -18, dao: roll(2, 5), mind: roll(5, 10), insight: roll(0, 1), seclusionFatigue: -2 });
-  log("你以贡献换得师门长老半日指点，往日关隘忽然明白了几分。", "gold");
+  const practice = roll(18, 42) + state.realm * 10 + state.insight * 2;
+  add(state, { sectContribution: -18, dao: roll(2, 5), mind: roll(5, 10), insight: roll(0, 1), cultivation: practice, seclusionFatigue: -2 });
+  log(`你以贡献换得师门长老半日指点，往日关隘忽然明白了几分，修为也增长 ${practice}。`, "gold");
 }
 
 function doHerbGarden() {
   passYears(1);
   if (state.ended) return;
-  add(state, { sectContribution: roll(10, 18), righteousReputation: 1, mind: roll(2, 6), spiritStones: roll(8, 22) });
+  add(state, { sectContribution: roll(10, 18), righteousReputation: 1, mind: roll(2, 6), cultivation: roll(8, 22), spiritStones: roll(8, 22) });
   if (roll(1, 100) <= 55 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "ningshen", "bigu"]));
   if (roll(1, 100) <= 38 + state.luck) addGood("spiritHerb", roll(1, 2));
   log("你在青岚宗药园值守一年，辨识灵草、驱赶灵虫，得了些贡献与药香余泽。", "gold");
@@ -1299,15 +1302,17 @@ function doSectTrial() {
   passYears(1);
   if (state.ended) return;
   const won = roll(1, 100) <= 42 + state.power + state.realm * 5;
+  const practice = won ? roll(36, 76) + state.realm * 12 : roll(16, 34) + state.realm * 8;
   add(state, {
     power: won ? roll(4, 8) : roll(1, 4),
+    cultivation: practice,
     sectContribution: won ? 26 : 10,
     sectReputation: won ? 2 : 1,
     righteousReputation: won ? 2 : 0,
     mind: won ? 4 : -2,
     health: won ? -roll(0, 8) : -roll(6, 18)
   });
-  log(won ? "门内小比上你连胜数场，外门执事终于记住了你的名字。" : "门内小比你败于同门剑下，虽有不甘，也看清了自身短板。", won ? "gold" : "danger");
+  log(won ? `门内小比上你连胜数场，外门执事终于记住了你的名字，修为增长 ${practice}。` : `门内小比你败于同门剑下，虽有不甘，也看清了自身短板，修为增长 ${practice}。`, won ? "gold" : "danger");
 }
 
 function doDemonTrial() {
@@ -1327,14 +1332,14 @@ function doBlackMarket() {
   passYears(1);
   if (state.ended) return;
   if (state.spiritStones >= 70) {
-    add(state, { spiritStones: -70, sectContribution: roll(8, 16), worldliness: 2, demonicReputation: 1 });
+    add(state, { spiritStones: -70, sectContribution: roll(8, 16), dao: roll(1, 4), mind: roll(0, 4), worldliness: 2, demonicReputation: 1 });
     addElixirPill(pick(["juling", "ningshen", "yangyuan", "yulu"]));
     if (roll(1, 100) <= 28 + state.luck) addBreakPill(pickMarketPill()?.id ?? "qi");
-    log("你借血河教暗线进入黑市，花灵石换来丹药与一份人情。", "gold");
+    log("你借血河教暗线进入黑市，花灵石换来丹药、破境传闻与一份人情。", "gold");
     return;
   }
-  add(state, { sectContribution: roll(8, 18), worldliness: 2, mind: -3, demonicReputation: 1 });
-  log("你囊中灵石不足，只替黑市牵线跑腿，换了些魔门贡献。", "");
+  add(state, { sectContribution: roll(8, 18), dao: roll(0, 2), worldliness: 2, mind: -1, demonicReputation: 1 });
+  log("你囊中灵石不足，只替黑市牵线跑腿，换了些魔门贡献，也听来几句偏门破境传闻。", "");
 }
 
 function doRaidTreasure() {
@@ -1353,9 +1358,10 @@ function doRaidTreasure() {
 function doHideCultivate() {
   const baseGain = gainCultivation("cultivate");
   const extraGain = roll(12, 28);
-  add(state, { mind: roll(3, 8), health: roll(2, 8), seclusionFatigue: -2, cultivation: extraGain });
+  const daoGain = roll(0, 2);
+  add(state, { mind: roll(8, 16), dao: daoGain, health: roll(4, 12), seclusionFatigue: -3, notoriety: -1, cultivation: extraGain });
   passYears(1);
-  log(`你避入荒山潜修，压下血煞反噬，修为增长 ${baseGain + extraGain}。`);
+  log(`你避入荒山潜修，压下血煞反噬，修为增长 ${baseGain + extraGain}${daoGain ? `，悟道增长 ${daoGain}` : ""}。`);
 }
 
 function doBloodForge() {
@@ -1365,8 +1371,9 @@ function doBloodForge() {
   }
   passYears(1);
   if (state.ended) return;
-  add(state, { sectContribution: -24, demonicReputation: 1, notoriety: 1, power: roll(8, 14), cultivation: roll(32, 72), health: -roll(8, 22), mind: -roll(5, 12) });
-  log("你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截。", "danger");
+  const daoGain = roll(0, 2) + (roll(1, 100) <= 22 + state.realm * 4 ? 1 : 0);
+  add(state, { sectContribution: -24, demonicReputation: 1, notoriety: 1, power: roll(8, 14), dao: daoGain, cultivation: roll(42, 88) + state.realm * 10, health: -roll(8, 22), mind: -roll(2, 8) });
+  log(`你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截${daoGain ? "，生死之间也悟出几分狠理" : ""}。`, "danger");
 }
 
 function attemptBreakthrough() {
