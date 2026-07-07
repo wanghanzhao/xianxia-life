@@ -21,6 +21,65 @@ const breakthroughPills = [
   { id: "tribulation", name: "渡劫丹", targetRealm: 7, bonus: 16, cost: 5200 }
 ];
 
+const elixirPills = [
+  {
+    id: "qingxin",
+    name: "清心丹",
+    cost: 80,
+    sell: 45,
+    desc: "稳心回血，适合受伤或心境不稳时服用。",
+    effectText: "气血 +34，心境 +8，闭关疲惫 -1",
+    use: (s) => add(s, { health: 34, mind: 8, seclusionFatigue: -1 })
+  },
+  {
+    id: "yangyuan",
+    name: "养元丹",
+    cost: 110,
+    sell: 62,
+    desc: "温养经脉，战斗或秘境后最常用。",
+    effectText: "气血 +55，闭关疲惫 -1",
+    use: (s) => add(s, { health: 55, seclusionFatigue: -1 })
+  },
+  {
+    id: "juling",
+    name: "聚灵丹",
+    cost: 130,
+    sell: 72,
+    desc: "辅助炼化灵气，低阶修士很爱囤。",
+    effectText: "修为 +45~90，心境 -2",
+    use: (s) => add(s, { cultivation: roll(45, 90), mind: -2 })
+  },
+  {
+    id: "ningshen",
+    name: "凝神丹",
+    cost: 150,
+    sell: 84,
+    desc: "凝神定念，适合冲关前补心境。",
+    effectText: "心境 +18，悟道 +1",
+    use: (s) => add(s, { mind: 18, dao: 1 })
+  },
+  {
+    id: "bigu",
+    name: "辟谷丹",
+    cost: 95,
+    sell: 50,
+    desc: "闭关常备，可压住疲惫与伤势。",
+    effectText: "心境 +6，气血 +12，闭关疲惫 -3",
+    use: (s) => add(s, { mind: 6, health: 12, seclusionFatigue: -3 })
+  },
+  {
+    id: "yulu",
+    name: "玉露丹",
+    cost: 260,
+    sell: 150,
+    rare: true,
+    minRealm: 1,
+    desc: "小宗门也不常见的好丹，疗伤悟道皆有用。",
+    effectText: "气血 +28，心境 +12，悟道 +2",
+    use: (s) => add(s, { health: 28, mind: 12, dao: 2 })
+  }
+];
+
 const tradeGoods = [
   { id: "spiritHerb", name: "灵草", basePrice: 24, desc: "炼丹常用材料，坊市需求稳定。" },
   { id: "beastCore", name: "妖兽内丹", basePrice: 58, desc: "炼器、炼丹皆可用，秘境中较常见。" },
@@ -580,6 +639,7 @@ const defaultState = {
   power: 12,
   spiritStones: 30,
   pills: 0,
+  elixirPills: {},
   breakPills: {},
   goods: {},
   marketTrend: 0,
@@ -606,6 +666,13 @@ const $ = (id) => document.getElementById(id);
 
 function add(target, patch) {
   Object.entries(patch).forEach(([key, value]) => {
+    if (key === "pills") {
+      target.elixirPills = target.elixirPills ?? {};
+      target.elixirPills.qingxin = Math.max(0, (target.elixirPills.qingxin ?? target.pills ?? 0) + value);
+      target.pills = target.elixirPills.qingxin;
+      if (value > 0) notifyGain("清心丹", value, "item");
+      return;
+    }
     if (value > 0) notifyGain(key, value);
     target[key] += value;
   });
@@ -622,6 +689,39 @@ function add(target, patch) {
   target.demonicReputation = Math.max(0, target.demonicReputation ?? 0);
   target.notoriety = Math.max(0, target.notoriety ?? 0);
   target.worldTension = clamp(target.worldTension ?? 0, 0, 100);
+}
+
+function elixirById(pillId) {
+  return elixirPills.find((item) => item.id === pillId);
+}
+
+function syncLegacyPills(target = state, importLegacy = false) {
+  if (!target) return;
+  target.elixirPills = target.elixirPills ?? {};
+  const legacy = target.pills ?? 0;
+  if (importLegacy && legacy > 0 && Object.keys(target.elixirPills).length === 0) target.elixirPills.qingxin = legacy;
+  target.pills = target.elixirPills.qingxin ?? 0;
+}
+
+function addElixirPill(pillId, amount = 1) {
+  const pill = elixirById(pillId);
+  if (!pill || amount <= 0) return;
+  state.elixirPills[pillId] = (state.elixirPills[pillId] ?? 0) + amount;
+  syncLegacyPills();
+  notifyGain(pill.name, amount, "item");
+}
+
+function removeElixirPill(pillId, amount = 1) {
+  if (!state.elixirPills[pillId]) return 0;
+  const removed = Math.min(state.elixirPills[pillId], amount);
+  state.elixirPills[pillId] -= removed;
+  if (state.elixirPills[pillId] <= 0) delete state.elixirPills[pillId];
+  syncLegacyPills();
+  return removed;
+}
+
+function elixirCount() {
+  return Object.values(state.elixirPills ?? {}).reduce((sum, amount) => sum + amount, 0);
 }
 
 function addBreakPill(pillId, amount = 1) {
@@ -658,6 +758,17 @@ function marketPrice(good) {
   const trend = 1 + state.marketTrend * 0.06;
   const socialBonus = 1 + Math.min(0.18, state.worldliness * 0.006);
   return Math.max(1, Math.floor(good.basePrice * realmBonus * trend * socialBonus));
+}
+
+function elixirBuyPrice(pill) {
+  const trend = 1 + state.marketTrend * 0.04;
+  const bargain = 1 - Math.min(0.12, state.worldliness * 0.004);
+  return Math.max(1, Math.floor(pill.cost * trend * bargain));
+}
+
+function elixirSellPrice(pill) {
+  const trend = 1 + state.marketTrend * 0.04;
+  return Math.max(1, Math.floor(pill.sell * trend));
 }
 
 function refreshMarketTrend() {
@@ -767,6 +878,30 @@ function pickMarketPill() {
   const rare = options.find((pill) => pill.rare);
   if (rare && roll(1, 100) <= 18 + state.luck * 2 + state.worldliness) return rare;
   return options.find((pill) => !pill.rare) ?? options[0];
+}
+
+function pickMarketElixir() {
+  const candidates = elixirPills.filter((pill) => {
+    if ((pill.minRealm ?? 0) > state.realm) return false;
+    if (pill.rare) return roll(1, 100) <= 18 + state.luck + state.worldliness;
+    return true;
+  });
+  return pick(candidates.length ? candidates : elixirPills.filter((pill) => !pill.rare));
+}
+
+function maybeFindElixirPill(kind) {
+  const chanceMap = { travel: 16, social: 12, dungeon: 24 };
+  const chance = (chanceMap[kind] ?? 0) + Math.floor(state.luck / 2);
+  if (roll(1, 100) > chance) return "";
+  const pools = {
+    travel: ["qingxin", "yangyuan", "bigu", "juling"],
+    social: ["qingxin", "ningshen", "bigu"],
+    dungeon: ["yangyuan", "juling", "ningshen", "yulu"]
+  };
+  const pill = elixirById(pick(pools[kind] ?? ["qingxin"]));
+  if (!pill) return "";
+  addElixirPill(pill.id);
+  return ` 你还得了一枚「${pill.name}」。`;
 }
 
 function maybeFindBreakthroughPill(kind) {
@@ -1028,10 +1163,11 @@ function chooseOption(index) {
   const choice = event.choices[index];
   if (!choice) return;
   const practiceGain = applyChoice(choice);
+  const foundElixirText = maybeFindElixirPill(event.kind);
   const foundPillText = maybeFindBreakthroughPill(event.kind);
   const lootText = maybeFindTradeLoot(event.kind);
   const gainText = practiceGain > 0 ? ` 此番经历令你修为增长 ${practiceGain}。` : "";
-  log(`${choice.result}${gainText}${foundPillText}${lootText}`, choice.type);
+  log(`${choice.result}${gainText}${foundElixirText}${foundPillText}${lootText}`, choice.type);
   state.pendingChoice = null;
   if (state.ended) {
     save();
@@ -1134,6 +1270,7 @@ function doSectMission() {
     power: roll(1, 4),
     health: -injury
   });
+  if (roll(1, 100) <= 26 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "bigu"]));
   const danger = injury > 10 ? "途中遭妖兽反扑，挂了些彩。" : "一路尚算顺遂。";
   log(`你接下青岚宗巡山除妖任务，清剿山道邪祟，得宗门贡献，修为增长 ${gain}。${danger}`, injury > 10 ? "danger" : "gold");
 }
@@ -1152,7 +1289,8 @@ function doSectTeach() {
 function doHerbGarden() {
   passYears(1);
   if (state.ended) return;
-  add(state, { sectContribution: roll(10, 18), righteousReputation: 1, mind: roll(2, 6), pills: roll(0, 1), spiritStones: roll(8, 22) });
+  add(state, { sectContribution: roll(10, 18), righteousReputation: 1, mind: roll(2, 6), spiritStones: roll(8, 22) });
+  if (roll(1, 100) <= 55 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "ningshen", "bigu"]));
   if (roll(1, 100) <= 38 + state.luck) addGood("spiritHerb", roll(1, 2));
   log("你在青岚宗药园值守一年，辨识灵草、驱赶灵虫，得了些贡献与药香余泽。", "gold");
 }
@@ -1181,6 +1319,7 @@ function doDemonTrial() {
   }
   const gain = gainCultivation("dungeon");
   add(state, { sectContribution: roll(20, 36), sectReputation: 1, demonicReputation: 2, notoriety: 1, power: roll(4, 9), mind: -roll(4, 10), health: -roll(12, 28) });
+  if (roll(1, 100) <= 35 + state.luck) addElixirPill(pick(["yangyuan", "juling", "ningshen"]));
   log(`你入魔窟试炼，与残魂妖影厮杀一夜，修为增长 ${gain}，也染了一身血煞。`, "danger");
 }
 
@@ -1188,7 +1327,8 @@ function doBlackMarket() {
   passYears(1);
   if (state.ended) return;
   if (state.spiritStones >= 70) {
-    add(state, { spiritStones: -70, sectContribution: roll(8, 16), pills: 1, worldliness: 2, demonicReputation: 1 });
+    add(state, { spiritStones: -70, sectContribution: roll(8, 16), worldliness: 2, demonicReputation: 1 });
+    addElixirPill(pick(["juling", "ningshen", "yangyuan", "yulu"]));
     if (roll(1, 100) <= 28 + state.luck) addBreakPill(pickMarketPill()?.id ?? "qi");
     log("你借血河教暗线进入黑市，花灵石换来丹药与一份人情。", "gold");
     return;
@@ -1206,6 +1346,7 @@ function doRaidTreasure() {
   }
   add(state, { spiritStones: roll(65, 150), sectContribution: roll(12, 24), demonicReputation: 2, notoriety: roll(1, 3), power: roll(3, 7), health: -roll(12, 34), mind: -roll(2, 8) });
   if (roll(1, 100) <= 45) addGood(pick(["manual", "beastCore", "spiritOre"]), 1);
+  if (roll(1, 100) <= 32 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "juling", "ningshen"]));
   log("你设伏夺宝，抢得一批灵石与货品。此事无人明说，但血河教内多看了你一眼。", "danger");
 }
 
@@ -1376,6 +1517,7 @@ function startLife() {
   state.name = $("nameInput").value.trim() || "无名";
   state.gender = selectedGender;
   Object.assign(state, applyPatch(state, origin.patch));
+  syncLegacyPills(state, true);
   state.traits.push(origin.name);
   log(`你生于${origin.name}，十六岁那年，于破庙中拾得半卷《归尘经》。`, "gold");
   save();
@@ -1404,7 +1546,7 @@ function load() {
 
 function normalizeState(saved) {
   if (!saved) return null;
-  return {
+  const normalized = {
     ...JSON.parse(JSON.stringify(defaultState)),
     ...saved,
     gender: saved.gender ?? "male",
@@ -1412,6 +1554,7 @@ function normalizeState(saved) {
     bladeSkin: saved.bladeSkin ?? "plain",
     traits: saved.traits ?? [],
     inventory: saved.inventory ?? [],
+    elixirPills: saved.elixirPills ?? {},
     breakPills: saved.breakPills ?? {},
     goods: saved.goods ?? {},
     sectId: saved.sectId ?? null,
@@ -1425,6 +1568,8 @@ function normalizeState(saved) {
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
     log: saved.log ?? []
   };
+  syncLegacyPills(normalized, true);
+  return normalized;
 }
 
 function reset() {
@@ -1513,7 +1658,7 @@ function render() {
     ["福缘", state.luck],
     ["战力", state.power],
     ["灵石", state.spiritStones],
-    ["清心丹", state.pills],
+    ["丹药", elixirCount()],
     ["破境丹", Object.values(state.breakPills).reduce((sum, amount) => sum + amount, 0)],
     ["宗门贡献", state.sectContribution],
     ["正道声望", state.righteousReputation],
@@ -1552,8 +1697,12 @@ function render() {
   const breakPillItems = breakthroughPills
     .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
     .map((pill) => `<span class="pill">${pill.name} x${state.breakPills[pill.id]} (+${pill.bonus}%)</span>`);
+  const elixirItems = elixirPills
+    .filter((pill) => (state.elixirPills[pill.id] ?? 0) > 0)
+    .map((pill) => `<span class="pill">${pill.name} x${state.elixirPills[pill.id]}</span>`);
   const inventoryItems = [
     ...state.inventory.map((item) => `<span class="pill">${item}</span>`),
+    ...elixirItems,
     ...breakPillItems
   ];
   $("inventory").innerHTML = inventoryItems.length ? inventoryItems.join("") : `<span class="pill">空空如也</span>`;
@@ -1604,7 +1753,20 @@ function renderMarket() {
       </div>`;
     });
   const pillRows = [
-    state.pills > 0 ? `<div class="market-row"><div><strong>清心丹 x${state.pills}</strong><span>回血稳心，可留可卖。</span></div><div class="market-actions"><button data-sell-pill="qingxin" type="button">卖1 45</button>${state.pills > 1 ? `<button data-sell-pill-all="qingxin" type="button">全卖 ${state.pills * 45}</button>` : ""}</div></div>` : "",
+    ...elixirPills
+      .filter((pill) => (state.elixirPills[pill.id] ?? 0) > 0)
+      .map((pill) => {
+        const amount = state.elixirPills[pill.id];
+        const price = elixirSellPrice(pill);
+        return `<div class="market-row">
+          <div><strong>${pill.name} x${amount}</strong><span>${pill.effectText}。${pill.desc}</span></div>
+          <div class="market-actions">
+            <button data-use-elixir="${pill.id}" type="button">服1</button>
+            <button data-sell-elixir="${pill.id}" type="button">卖1 ${price}</button>
+            ${amount > 1 ? `<button data-sell-elixir-all="${pill.id}" type="button">全卖 ${price * amount}</button>` : ""}
+          </div>
+        </div>`;
+      }),
     ...breakthroughPills
       .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
       .map((pill) => {
@@ -1679,16 +1841,31 @@ function sellGood(goodId, amount = 1) {
   render();
 }
 
-function sellQingxinPill(amount = 1) {
-  if (state.pills <= 0) {
-    log("你并无多余清心丹可卖。", "danger");
+function sellElixirPill(pillId, amount = 1) {
+  const pill = elixirById(pillId);
+  if (!pill || !state.elixirPills[pillId]) {
+    log("你并无这种丹药可卖。", "danger");
     render();
     return;
   }
-  const sold = Math.min(state.pills, amount);
-  state.pills -= sold;
-  add(state, { spiritStones: sold * 45, worldliness: Math.ceil(sold / 2) });
-  log(`你售出清心丹 x${sold}，得 ${sold * 45} 灵石。`, "gold");
+  const price = elixirSellPrice(pill);
+  const sold = removeElixirPill(pillId, amount);
+  add(state, { spiritStones: sold * price, worldliness: Math.ceil(sold / 2) });
+  log(`你售出「${pill.name}」x${sold}，得 ${sold * price} 灵石。`, "gold");
+  save();
+  render();
+}
+
+function useElixirPill(pillId) {
+  const pill = elixirById(pillId);
+  if (!pill || !state.elixirPills[pillId]) {
+    log("你翻遍行囊，并无这种丹药。", "danger");
+    render();
+    return;
+  }
+  removeElixirPill(pillId);
+  pill.use(state);
+  log(`你服下一枚「${pill.name}」，${pill.effectText}。`, "gold");
   save();
   render();
 }
@@ -1778,14 +1955,20 @@ $("marketPanel").addEventListener("click", (event) => {
     sellGood(sellGoodAllButton.dataset.sellGoodAll, state.goods[sellGoodAllButton.dataset.sellGoodAll]);
     return;
   }
-  const sellPillButton = event.target.closest("[data-sell-pill]");
-  if (sellPillButton) {
-    sellQingxinPill();
+  const useElixirButton = event.target.closest("[data-use-elixir]");
+  if (useElixirButton) {
+    useElixirPill(useElixirButton.dataset.useElixir);
     return;
   }
-  const sellPillAllButton = event.target.closest("[data-sell-pill-all]");
-  if (sellPillAllButton) {
-    sellQingxinPill(state.pills);
+  const sellElixirButton = event.target.closest("[data-sell-elixir]");
+  if (sellElixirButton) {
+    sellElixirPill(sellElixirButton.dataset.sellElixir);
+    return;
+  }
+  const sellElixirAllButton = event.target.closest("[data-sell-elixir-all]");
+  if (sellElixirAllButton) {
+    const pillId = sellElixirAllButton.dataset.sellElixirAll;
+    sellElixirPill(pillId, state.elixirPills[pillId]);
     return;
   }
   const sellBreakPillButton = event.target.closest("[data-sell-break-pill]");
@@ -1801,26 +1984,26 @@ $("marketPanel").addEventListener("click", (event) => {
 });
 $("usePillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
-  if (state.pills <= 0) {
-    log("你翻遍行囊，并无可用清心丹。", "danger");
+  const preferred = ["qingxin", "yangyuan", "ningshen", "bigu", "juling", "yulu"].find((pillId) => (state.elixirPills[pillId] ?? 0) > 0);
+  if (!preferred) {
+    log("你翻遍行囊，并无可用丹药。", "danger");
     render();
     return;
   }
-  state.pills -= 1;
-  add(state, { health: 34, mind: 8, seclusionFatigue: -1 });
-  log("你服下一枚清心丹，药力化开，气血与心境稍得恢复。", "gold");
-  save();
-  render();
+  useElixirPill(preferred);
 });
 $("buyPillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
-  if (state.spiritStones < 80) {
-    log("坊市清心丹昂贵，至少需要 80 灵石。", "danger");
+  const pill = pickMarketElixir();
+  const price = elixirBuyPrice(pill);
+  if (state.spiritStones < price) {
+    log(`丹铺今日有「${pill.name}」，开价 ${price} 灵石。你囊中羞涩，只能作罢。`, "danger");
     render();
     return;
   }
-  add(state, { spiritStones: -80, pills: 1, worldliness: 1 });
-  log("你在坊市购得一枚清心丹，花去 80 灵石。", "gold");
+  add(state, { spiritStones: -price, worldliness: 1 });
+  addElixirPill(pill.id);
+  log(`你在坊市丹铺花去 ${price} 灵石，购得一枚「${pill.name}」。${pill.desc}`, "gold");
   save();
   render();
 });
