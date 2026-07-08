@@ -85,6 +85,18 @@ button:hover {
   margin: 0;
 }
 
+.version-badge {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 2px 7px;
+  border: 1px solid rgba(185, 138, 53, 0.35);
+  border-radius: 999px;
+  color: var(--gold);
+  background: rgba(255, 251, 241, 0.9);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--gold);
@@ -536,6 +548,35 @@ input {
   gap: 8px;
   min-height: 52px;
   margin: 12px 0 20px;
+}
+
+.version-panel {
+  display: grid;
+  gap: 7px;
+  margin: 8px 0 20px;
+}
+
+.version-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+}
+
+.version-line strong,
+.version-text {
+  overflow-wrap: anywhere;
+}
+
+.version-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .resource-grid {

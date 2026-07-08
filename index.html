@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260708-market-pills-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-local-v1" />
   </head>
   <body>
     <main class="app">
@@ -12,6 +12,7 @@
         <div>
           <p class="eyebrow">文字修仙模拟人生</p>
           <h1>尘缘修仙录</h1>
+          <span id="versionBadge" class="version-badge">v0.8</span>
         </div>
         <div class="top-actions">
           <button id="saveBtn" type="button">存档</button>
@@ -112,8 +113,14 @@
             <button id="usePillBtn" type="button">服用丹药</button>
             <button id="buyPillBtn" type="button">查看丹铺</button>
             <button id="buyBreakPillBtn" type="button">查看破境丹</button>
+            <button id="alchemyBtn" type="button">开炉炼丹</button>
+            <button id="commissionAlchemyBtn" type="button">委托炼丹</button>
+            <button id="treasureBtn" type="button">炼化宝材</button>
             <button id="studyManualBtn" type="button">参悟残卷</button>
+            <button id="switchManualBtn" type="button">切换功法</button>
             <button id="restWithStoneBtn" type="button">灵石调息</button>
+            <button id="shareReportBtn" type="button">生成战报</button>
+            <button id="backupBtn" type="button">备份码</button>
           </div>
           <div data-mobile-panel-child="market">
             <h2>交易行</h2>
@@ -124,6 +131,8 @@
             <div id="traits" class="traits"></div>
             <h2>行囊</h2>
             <div id="inventory" class="inventory"></div>
+            <h2>版本与分享</h2>
+            <div id="versionPanel" class="version-panel"></div>
           </div>
         </aside>
       </section>
@@ -179,7 +188,7 @@
       <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     </main>
 
-      <script src="./src/game.js?v=20260708-market-pills-v1"></script>
-      <script src="./src/map-break-addon.js?v=20260708-market-pills-v1"></script>
+      <script src="./src/game.js?v=20260708-local-v1"></script>
+      <script src="./src/map-break-addon.js?v=20260708-local-v1"></script>
   </body>
 </html>
