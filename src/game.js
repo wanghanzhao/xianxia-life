@@ -893,6 +893,14 @@ const defaultState = {
   karma: 0,
   shelterComfort: 0,
   bloodDebt: 0,
+  daoHeart: "求真",
+  daoHeartScore: 0,
+  favors: 0,
+  grudges: 0,
+  hiddenWounds: 0,
+  heartDemon: 0,
+  tribulationExperience: 0,
+  foundationFlaw: 0,
   worldTension: 0,
   traits: [],
   inventory: [],
@@ -937,6 +945,13 @@ function add(target, patch) {
   target.karma = clamp(target.karma ?? 0, 0, 100);
   target.shelterComfort = clamp(target.shelterComfort ?? 0, 0, 100);
   target.bloodDebt = clamp(target.bloodDebt ?? 0, 0, 100);
+  target.daoHeartScore = clamp(target.daoHeartScore ?? 0, -100, 100);
+  target.favors = clamp(target.favors ?? 0, 0, 100);
+  target.grudges = clamp(target.grudges ?? 0, 0, 100);
+  target.hiddenWounds = clamp(target.hiddenWounds ?? 0, 0, 100);
+  target.heartDemon = clamp(target.heartDemon ?? 0, 0, 100);
+  target.tribulationExperience = clamp(target.tribulationExperience ?? 0, 0, 100);
+  target.foundationFlaw = clamp(target.foundationFlaw ?? 0, 0, 100);
   target.worldTension = clamp(target.worldTension ?? 0, 0, 100);
 }
 
@@ -1060,6 +1075,31 @@ function currentSect() {
   return state?.sectId ? sects[state.sectId] : null;
 }
 
+const daoHeartNames = ["守正", "利己", "杀伐", "求真", "无情"];
+
+function updateDaoHeart(style) {
+  const map = {
+    rescue: ["守正", 8],
+    profit: ["利己", 7],
+    force: ["杀伐", 6],
+    observe: ["求真", 5],
+    bargain: ["利己", 3],
+    retreat: ["无情", 4]
+  };
+  const [name, delta] = map[style] ?? ["求真", 1];
+  state.daoHeart = name;
+  const signed = name === "利己" || name === "杀伐" || name === "无情" ? -delta : delta;
+  add(state, { daoHeartScore: signed });
+}
+
+function daoHeartLabel() {
+  const name = daoHeartNames.includes(state.daoHeart) ? state.daoHeart : "求真";
+  const score = state.daoHeartScore;
+  if (Math.abs(score) >= 65) return `${name}如铁`;
+  if (Math.abs(score) >= 35) return `${name}渐定`;
+  return `${name}未定`;
+}
+
 function sectRankLabel() {
   const sect = currentSect();
   if (!sect) return "散修";
@@ -1088,8 +1128,9 @@ function sectBurdenLabel() {
 function identityLabel() {
   const sect = currentSect();
   const burden = sectBurdenLabel();
-  if (!sect) return burden ? `散修 · ${burden}` : "散修";
-  return `${sect.name}${sectRankLabel()}${burden ? ` · ${burden}` : ""}`;
+  const heart = daoHeartLabel();
+  if (!sect) return `散修 · ${heart}${burden ? ` · ${burden}` : ""}`;
+  return `${sect.name}${sectRankLabel()} · ${heart}${burden ? ` · ${burden}` : ""}`;
 }
 
 function actionList() {
@@ -1113,7 +1154,13 @@ function notifyGain(key, amount, explicitType = "") {
     notoriety: "通缉",
     karma: "因果",
     shelterComfort: "温室滞碍",
-    bloodDebt: "血债"
+    bloodDebt: "血债",
+    favors: "人情",
+    grudges: "仇怨",
+    hiddenWounds: "暗伤",
+    heartDemon: "心魔",
+    tribulationExperience: "历劫",
+    foundationFlaw: "根基瑕疵"
   };
   const label = labels[key] ?? (explicitType === "item" ? key : "");
   if (!label) return;
@@ -1160,7 +1207,9 @@ function bestBreakPillForTarget() {
 }
 
 function baseBreakChance() {
-  const realmPressure = state.realm * 8 + Math.max(0, state.realm - 2) * 5;
+  const realmPressure = state.realm * 10 + Math.max(0, state.realm - 2) * 8 + Math.max(0, state.realm - 4) * 8;
+  const woundPressure = Math.floor(state.hiddenWounds / 5) + Math.floor(state.heartDemon / 6) + Math.floor(state.foundationFlaw / 7);
+  const daoHeartBonus = Math.abs(state.daoHeartScore) >= 35 ? 3 : 0;
   return clamp(Math.floor(
     5 +
     state.mind * 0.08 +
@@ -1169,7 +1218,9 @@ function baseBreakChance() {
     state.worldliness * 0.12 +
     state.power * 0.08 -
     state.seclusionFatigue * 5 -
-    realmPressure
+    woundPressure -
+    realmPressure +
+    daoHeartBonus
   ), 3, 52);
 }
 
@@ -1189,12 +1240,14 @@ function breakthroughPrepScore(targetIndex = targetRealmIndex()) {
   const elixirScore = config.elixirs.reduce((sum, line) => sum + prepLineScore(line, state.elixirPills), 0);
   const sectScore = currentSect() ? Math.min(10, Math.floor(state.sectContribution / 18) + state.sectReputation) : 0;
   const manualScore = Math.min(8, Math.floor(state.dao / Math.max(3, realms[targetIndex - 1]?.insightNeed || 3)));
-  return clamp(materialScore + elixirScore + sectScore + manualScore, 0, 42);
+  const tribulationScore = Math.min(12, Math.floor(state.tribulationExperience / Math.max(4, targetIndex + 2)));
+  const karmaScore = Math.min(6, Math.floor(state.karma / 12));
+  return clamp(materialScore + elixirScore + sectScore + manualScore + tribulationScore + karmaScore, 0, 54);
 }
 
 function breakthroughChance(pill = bestBreakPillForTarget()) {
-  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
-  const upper = clamp(68 - state.realm * 3 + Math.floor(state.luck / 4), 38, 78);
+  const pillBonus = pill ? Math.min(pill.bonus, 10 + state.realm * 2) : 0;
+  const upper = clamp(62 - state.realm * 6 - Math.max(0, state.realm - 3) * 4 + Math.floor(state.luck / 5), 18, 68);
   return clamp(baseBreakChance() + breakthroughPrepScore() + pillBonus, 3, upper);
 }
 
@@ -1614,6 +1667,7 @@ function chooseOption(index) {
   const choice = event.choices[index];
   if (!choice) return;
   const practiceGain = applyChoice(choice);
+  if (choice.generatedStyle) updateDaoHeart(choice.generatedStyle);
   const foundElixirText = maybeFindElixirPill(event.kind);
   const foundPillText = maybeFindBreakthroughPill(event.kind);
   const lootText = maybeFindTradeLoot(event.kind);
@@ -1704,6 +1758,21 @@ function applyKindFlavorToEffects(effects, ctx, style) {
   }
   if (ctx.kind === "herbGarden" && style !== "retreat") addPatchValue(effects, "mind", roll(1, 4));
   if (ctx.kind === "blackMarket" && style === "bargain") addPatchValue(effects, "spiritStones", -Math.min(state.spiritStones, roll(20, 70)));
+  if (style === "rescue") {
+    addPatchValue(effects, "favors", roll(2, 7));
+    addPatchValue(effects, "heartDemon", -roll(0, 3));
+  }
+  if (style === "profit") {
+    addPatchValue(effects, "grudges", roll(1, 6));
+    addPatchValue(effects, "heartDemon", roll(0, 4));
+  }
+  if (style === "force") {
+    addPatchValue(effects, "tribulationExperience", roll(2, 7));
+    addPatchValue(effects, "hiddenWounds", roll(0, 4));
+  }
+  if (style === "observe") addPatchValue(effects, "tribulationExperience", roll(1, 4));
+  if (style === "retreat") addPatchValue(effects, "heartDemon", roll(0, 2));
+  if (ctx.danger >= 28 && style !== "retreat") addPatchValue(effects, "tribulationExperience", roll(2, 6));
 }
 
 function materializeLayeredChoice(style, ctx) {
@@ -1936,21 +2005,32 @@ function attemptBreakthrough() {
     state.cultivation = 0;
     state.dao = Math.max(0, state.dao - current.insightNeed);
     state.worldliness = Math.max(0, state.worldliness - Math.ceil(current.insightNeed / 2));
+    state.tribulationExperience = Math.max(0, state.tribulationExperience - (8 + current.insightNeed));
+    state.heartDemon = Math.max(0, state.heartDemon - roll(4, 10));
+    state.hiddenWounds = Math.max(0, state.hiddenWounds - roll(2, 7));
+    state.foundationFlaw = Math.max(0, state.foundationFlaw - roll(1, 5));
     state.seclusionFatigue = 0;
     state.life = realms[state.realm].life + state.luck;
     state.health = 100;
     state.mind = clamp(state.mind + 8, 0, 100);
-    log(`${pillText} 雷声隐隐，你破关而出，终成${realm().name}修士。寿元增至 ${state.life}。`, "gold");
+    log(`${pillText} 雷声隐隐，你破关而出，终成${realm().name}修士。寿元增至 ${state.life}，旧劫也被洗去几分。`, "gold");
   } else {
     state.cultivation = Math.floor(state.cultivation * (0.48 + Math.min(0.14, prepScore / 300)));
-    state.health -= roll(28, 58) + state.realm * 4;
-    state.mind -= roll(12, 26) + state.realm * 2;
+    const backlash = roll(28, 58) + state.realm * 5 + Math.floor(state.heartDemon / 8);
+    state.health -= backlash;
+    state.mind -= roll(12, 26) + state.realm * 3;
+    add(state, {
+      hiddenWounds: roll(4, 10) + state.realm,
+      heartDemon: roll(3, 9) + Math.floor(state.realm / 2),
+      foundationFlaw: roll(1, 5) + Math.max(0, state.realm - 2),
+      tribulationExperience: roll(2, 6)
+    });
     state.seclusionFatigue = clamp(state.seclusionFatigue + 2, 0, 10);
     if (state.health <= 0 || roll(1, 100) <= 12 + state.realm * 5 - Math.floor(state.luck / 3)) {
       die(state, `${pillText} 冲关失败，灵气倒卷，经脉寸断，你没能撑过这场大劫。`);
       return;
     }
-    log(`${pillText} 冲关失败，灵气倒卷，经脉如焚。你勉强保住根基。`, "danger");
+    log(`${pillText} 冲关失败，灵气倒卷，经脉如焚。你勉强保住性命，却留下暗伤、心魔与根基瑕疵。`, "danger");
   }
 }
 
@@ -1971,13 +2051,17 @@ function checkRandomCalamity() {
 function checkWorldIncident() {
   if (state.ended || state.pendingChoice) return;
   const sectPressure = Math.floor((state.factionEntanglement + state.shelterComfort + state.bloodDebt) / 24);
-  const baseChance = 5 + Math.floor(state.worldTension / 12) + Math.floor(state.notoriety / 4) + sectPressure;
+  const fatePressure = Math.floor((state.grudges + state.heartDemon + state.hiddenWounds) / 28);
+  const baseChance = 5 + Math.floor(state.worldTension / 12) + Math.floor(state.notoriety / 4) + sectPressure + fatePressure;
   if (roll(1, 100) > baseChance) return;
 
   const incidents = [];
   if (state.sectId === "qinglan") incidents.push(worldSectDraft, worldQinglanFaction);
   if (state.sectId === "bloodriver") incidents.push(worldDemonOrder, worldBloodriverDebt);
   if (state.notoriety >= 4) incidents.push(worldBountyHunters);
+  if (state.favors >= 8) incidents.push(worldFavorReturns);
+  if (state.grudges >= 8) incidents.push(worldGrudgeReturns);
+  if (state.heartDemon >= 15 || state.hiddenWounds >= 15) incidents.push(worldInnerBacklash);
   incidents.push(worldDemonRaid, worldBeastTide, worldAuctionRumor);
   pick(incidents)();
   state.worldTension = clamp(state.worldTension + roll(2, 8), 0, 100);
@@ -2022,6 +2106,25 @@ function worldBountyHunters() {
   const injury = roll(12, 30);
   add(state, { health: -injury, power: roll(1, 4), notoriety: -1 });
   log("几名赏金修士循着你的踪迹追来。你杀出重围，伤势不轻，通缉热度却暂时降了些。", "danger");
+}
+
+function worldFavorReturns() {
+  const used = roll(3, 9);
+  add(state, { favors: -used, karma: roll(1, 4), spiritStones: roll(20, 70), mind: roll(1, 5) });
+  if (roll(1, 100) <= 35 + state.luck) addGood(pick(["manual", "spiritHerb", "formationShard"]), 1);
+  log("旧日受你照拂的人递来消息，未必惊天动地，却在关键处替你省下一段弯路。", "gold");
+}
+
+function worldGrudgeReturns() {
+  const injury = roll(6, 18);
+  add(state, { grudges: -roll(2, 7), health: -injury, mind: -roll(1, 6), tribulationExperience: roll(1, 5) });
+  if (roll(1, 100) <= 35) add(state, { notoriety: 1 });
+  log("旧怨回头，有人暗中设局。你破局而出，伤不算重，却更明白修仙路上的账不会自己消失。", "danger");
+}
+
+function worldInnerBacklash() {
+  add(state, { heartDemon: -roll(2, 6), hiddenWounds: -roll(1, 4), health: -roll(4, 14), mind: -roll(2, 8), dao: roll(0, 2) });
+  log("夜半调息时旧伤与杂念一并翻涌。你熬过这一阵，身心受损，却也看清了自己一处破绽。", "danger");
 }
 
 function worldDemonRaid() {
@@ -2116,6 +2219,14 @@ function normalizeState(saved) {
     karma: saved.karma ?? 0,
     shelterComfort: saved.shelterComfort ?? 0,
     bloodDebt: saved.bloodDebt ?? 0,
+    daoHeart: saved.daoHeart ?? "求真",
+    daoHeartScore: saved.daoHeartScore ?? 0,
+    favors: saved.favors ?? 0,
+    grudges: saved.grudges ?? 0,
+    hiddenWounds: saved.hiddenWounds ?? 0,
+    heartDemon: saved.heartDemon ?? 0,
+    tribulationExperience: saved.tribulationExperience ?? 0,
+    foundationFlaw: saved.foundationFlaw ?? 0,
     worldTension: saved.worldTension ?? 0,
     marketTrend: saved.marketTrend ?? 0,
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
@@ -2221,6 +2332,13 @@ function render() {
     ["魔道声望", state.demonicReputation],
     ["通缉", state.notoriety],
     ["因果", state.karma],
+    ["道心", daoHeartLabel()],
+    ["人情", state.favors],
+    ["仇怨", state.grudges],
+    ["历劫", state.tribulationExperience],
+    ["心魔", state.heartDemon],
+    ["暗伤", state.hiddenWounds],
+    ["根基瑕疵", state.foundationFlaw],
     ["温室滞碍", state.shelterComfort],
     ["血债", state.bloodDebt],
     ["货品", goodsCount()],
@@ -2412,6 +2530,8 @@ function renderBreakNeed() {
     <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
     <div class="need-line ok"><span>筹备加成</span><strong>${breakthroughPrepScore()}%</strong></div>
     <div class="need-line ${pill ? "ok" : "bad"}"><span>可用破境丹</span><strong>${pillName}</strong></div>
+    <div class="need-line ${state.tribulationExperience >= targetRealmIndex() * 8 ? "ok" : "bad"}"><span>历劫</span><strong>${state.tribulationExperience}</strong></div>
+    <div class="need-line ${state.heartDemon + state.hiddenWounds + state.foundationFlaw <= 25 ? "ok" : "bad"}"><span>隐患</span><strong>心魔${state.heartDemon} / 暗伤${state.hiddenWounds} / 根基${state.foundationFlaw}</strong></div>
     <div class="need-line ${breakthroughChance(pill) >= 30 ? "ok" : "bad"}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>
     ${config ? `<div class="need-line"><span>${config.name}</span><strong>${config.notes}</strong></div>${materialHtml}` : ""}`;
   $("breakNeed").innerHTML = html;
