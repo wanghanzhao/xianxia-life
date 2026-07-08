@@ -2791,10 +2791,14 @@ function renderMarket() {
   const buyRows = [...buyElixirRows, ...buyBreakRows];
   $("marketPanel").innerHTML = `
     <div class="market-note">今日行情：${marketLabel()}。丹铺每年换货，越好的破境丹越少见。</div>
-    <div class="market-section-title">丹铺货架</div>
-    ${buyRows.length ? buyRows.join("") : `<div class="market-empty">今日丹铺没有合用的丹药。</div>`}
-    <div class="market-section-title">你的可售物品</div>
-    ${rows.length ? rows.join("") : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`}
+    <details class="market-drawer" open>
+      <summary>丹铺货架 <span>${buyRows.length}项</span></summary>
+      ${buyRows.length ? buyRows.join("") : `<div class="market-empty">今日丹铺没有合用的丹药。</div>`}
+    </details>
+    <details class="market-drawer">
+      <summary>你的可售物品 <span>${rows.length}项</span></summary>
+      ${rows.length ? rows.join("") : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`}
+    </details>
   `;
 }
 

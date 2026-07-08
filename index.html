@@ -109,30 +109,51 @@
             <h2>资源与资质</h2>
             <div id="resourceGrid" class="resource-grid"></div>
           </div>
-          <div class="quick-actions" data-mobile-panel-child="market">
-            <button id="usePillBtn" type="button">服用丹药</button>
-            <button id="buyPillBtn" type="button">查看丹铺</button>
-            <button id="buyBreakPillBtn" type="button">查看破境丹</button>
-            <button id="alchemyBtn" type="button">开炉炼丹</button>
-            <button id="commissionAlchemyBtn" type="button">委托炼丹</button>
-            <button id="treasureBtn" type="button">炼化宝材</button>
-            <button id="studyManualBtn" type="button">参悟残卷</button>
-            <button id="switchManualBtn" type="button">切换功法</button>
-            <button id="restWithStoneBtn" type="button">灵石调息</button>
-            <button id="shareReportBtn" type="button">生成战报</button>
-            <button id="backupBtn" type="button">备份码</button>
+          <div class="tool-drawers" data-mobile-panel-child="market">
+            <details class="tool-drawer" open>
+              <summary>常用</summary>
+              <div class="quick-actions">
+                <button id="usePillBtn" type="button">服用丹药</button>
+                <button id="restWithStoneBtn" type="button">灵石调息</button>
+                <button id="treasureBtn" type="button">炼化宝材</button>
+                <button id="studyManualBtn" type="button">参悟残卷</button>
+              </div>
+            </details>
+            <details class="tool-drawer">
+              <summary>丹铺与炼丹</summary>
+              <div class="quick-actions">
+                <button id="buyPillBtn" type="button">查看丹铺</button>
+                <button id="buyBreakPillBtn" type="button">查看破境丹</button>
+                <button id="alchemyBtn" type="button">开炉炼丹</button>
+                <button id="commissionAlchemyBtn" type="button">委托炼丹</button>
+              </div>
+            </details>
+            <details class="tool-drawer">
+              <summary>功法与记录</summary>
+              <div class="quick-actions">
+                <button id="switchManualBtn" type="button">切换功法</button>
+                <button id="shareReportBtn" type="button">生成战报</button>
+                <button id="backupBtn" type="button">备份码</button>
+              </div>
+            </details>
           </div>
           <div data-mobile-panel-child="market">
             <h2>交易行</h2>
             <div id="marketPanel" class="market-panel"></div>
           </div>
           <div data-mobile-panel-child="market">
-            <h2>机缘与负累</h2>
-            <div id="traits" class="traits"></div>
-            <h2>行囊</h2>
-            <div id="inventory" class="inventory"></div>
-            <h2>版本与分享</h2>
-            <div id="versionPanel" class="version-panel"></div>
+            <details class="compact-section" open>
+              <summary>机缘与负累</summary>
+              <div id="traits" class="traits"></div>
+            </details>
+            <details class="compact-section" open>
+              <summary>行囊</summary>
+              <div id="inventory" class="inventory"></div>
+            </details>
+            <details class="compact-section">
+              <summary>版本与分享</summary>
+              <div id="versionPanel" class="version-panel"></div>
+            </details>
           </div>
         </aside>
       </section>
