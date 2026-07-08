@@ -347,6 +347,30 @@ input {
   font-size: 18px;
 }
 
+.sell-market-panel {
+  margin-bottom: 16px;
+}
+
+.sell-market-panel h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.sell-market-panel .market-row {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.sell-market-panel .market-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.sell-market-panel .market-actions button {
+  width: 100%;
+  min-width: 0;
+}
+
 .break-card {
   margin-top: 18px;
   border: 1px solid var(--line);

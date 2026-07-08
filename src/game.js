@@ -2806,11 +2806,15 @@ function renderMarket() {
       <summary>丹铺货架 <span>${buyRows.length}项</span></summary>
       ${buyRows.length ? buyRows.join("") : `<div class="market-empty">今日丹铺没有合用的丹药。</div>`}
     </details>
-    <details class="market-drawer">
-      <summary>你的可售物品 <span>${rows.length}项</span></summary>
-      ${rows.length ? rows.join("") : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`}
-    </details>
   `;
+  if ($("sellMarketPanel")) {
+    $("sellMarketPanel").innerHTML = `
+      <details class="market-drawer" open>
+        <summary>可售清单 <span>${rows.length}项</span></summary>
+        ${rows.length ? rows.join("") : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`}
+      </details>
+    `;
+  }
 }
 
 function renderMap() {
@@ -3172,7 +3176,7 @@ $("detailModal").addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeDetailModal();
 });
-$("marketPanel").addEventListener("click", (event) => {
+function handleMarketClick(event) {
   const buyElixirButton = event.target.closest("[data-buy-elixir]");
   if (buyElixirButton) {
     buyMarketElixir(buyElixirButton.dataset.buyElixir);
@@ -3219,7 +3223,9 @@ $("marketPanel").addEventListener("click", (event) => {
     const pillId = sellBreakPillAllButton.dataset.sellBreakPillAll;
     sellBreakPill(pillId, state.breakPills[pillId]);
   }
-});
+}
+$("marketPanel").addEventListener("click", handleMarketClick);
+$("sellMarketPanel").addEventListener("click", handleMarketClick);
 $("usePillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
   const preferred = ["qingxin", "yangyuan", "ningshen", "bigu", "juling", "yulu"].find((pillId) => (state.elixirPills[pillId] ?? 0) > 0);
