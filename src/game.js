@@ -10,15 +10,30 @@ const realms = [
 ];
 
 const breakthroughPills = [
-  { id: "qi", name: "凝气丹", targetRealm: 1, bonus: 16, cost: 90 },
-  { id: "foundation", name: "筑基丹", targetRealm: 2, bonus: 24, cost: 180 },
-  { id: "foundationPure", name: "上品筑基丹", targetRealm: 2, bonus: 40, cost: 360, rare: true },
-  { id: "goldCore", name: "结金丹", targetRealm: 3, bonus: 24, cost: 420 },
-  { id: "goldCorePure", name: "上品结金丹", targetRealm: 3, bonus: 38, cost: 820, rare: true },
-  { id: "nascent", name: "化婴丹", targetRealm: 4, bonus: 22, cost: 980 },
-  { id: "spirit", name: "凝神丹", targetRealm: 5, bonus: 20, cost: 1800 },
-  { id: "harmony", name: "合道丹", targetRealm: 6, bonus: 18, cost: 3200 },
-  { id: "tribulation", name: "渡劫丹", targetRealm: 7, bonus: 16, cost: 5200 }
+  { id: "qiLow", name: "下品凝气丹", targetRealm: 1, bonus: 8, cost: 70, quality: "下品", marketWeight: 70 },
+  { id: "qi", name: "凝气丹", targetRealm: 1, bonus: 13, cost: 130, quality: "正品", marketWeight: 28 },
+  { id: "qiPure", name: "上品凝气丹", targetRealm: 1, bonus: 20, cost: 420, quality: "上品", rare: true, marketWeight: 2 },
+  { id: "foundationLow", name: "下品筑基丹", targetRealm: 2, bonus: 10, cost: 150, quality: "下品", marketWeight: 68 },
+  { id: "foundation", name: "筑基丹", targetRealm: 2, bonus: 18, cost: 320, quality: "正品", marketWeight: 26 },
+  { id: "foundationPure", name: "上品筑基丹", targetRealm: 2, bonus: 28, cost: 1200, quality: "上品", rare: true, marketWeight: 5 },
+  { id: "foundationPerfect", name: "极品筑基丹", targetRealm: 2, bonus: 38, cost: 3600, quality: "极品", rare: true, treasureOnly: true, marketWeight: 1 },
+  { id: "goldCoreLow", name: "下品结金丹", targetRealm: 3, bonus: 9, cost: 360, quality: "下品", marketWeight: 70 },
+  { id: "goldCore", name: "结金丹", targetRealm: 3, bonus: 17, cost: 760, quality: "正品", marketWeight: 24 },
+  { id: "goldCorePure", name: "上品结金丹", targetRealm: 3, bonus: 27, cost: 2600, quality: "上品", rare: true, marketWeight: 5 },
+  { id: "goldCorePerfect", name: "极品结金丹", targetRealm: 3, bonus: 36, cost: 7600, quality: "极品", rare: true, treasureOnly: true, marketWeight: 1 },
+  { id: "nascentLow", name: "下品化婴丹", targetRealm: 4, bonus: 8, cost: 900, quality: "下品", marketWeight: 72 },
+  { id: "nascent", name: "化婴丹", targetRealm: 4, bonus: 15, cost: 1900, quality: "正品", marketWeight: 23 },
+  { id: "nascentPure", name: "上品化婴丹", targetRealm: 4, bonus: 24, cost: 6200, quality: "上品", rare: true, marketWeight: 4 },
+  { id: "nascentPerfect", name: "极品化婴丹", targetRealm: 4, bonus: 32, cost: 16000, quality: "极品", rare: true, treasureOnly: true, marketWeight: 1 },
+  { id: "spiritLow", name: "下品凝神丹", targetRealm: 5, bonus: 7, cost: 1600, quality: "下品", marketWeight: 74 },
+  { id: "spirit", name: "凝神丹", targetRealm: 5, bonus: 13, cost: 3600, quality: "正品", marketWeight: 22 },
+  { id: "spiritPure", name: "上品凝神丹", targetRealm: 5, bonus: 21, cost: 11000, quality: "上品", rare: true, marketWeight: 4 },
+  { id: "harmonyLow", name: "下品合道丹", targetRealm: 6, bonus: 6, cost: 3200, quality: "下品", marketWeight: 76 },
+  { id: "harmony", name: "合道丹", targetRealm: 6, bonus: 11, cost: 7200, quality: "正品", marketWeight: 21 },
+  { id: "harmonyPure", name: "上品合道丹", targetRealm: 6, bonus: 18, cost: 22000, quality: "上品", rare: true, marketWeight: 3 },
+  { id: "tribulationLow", name: "下品渡劫丹", targetRealm: 7, bonus: 5, cost: 6200, quality: "下品", marketWeight: 78 },
+  { id: "tribulation", name: "渡劫丹", targetRealm: 7, bonus: 9, cost: 14000, quality: "正品", marketWeight: 20 },
+  { id: "tribulationPure", name: "上品渡劫丹", targetRealm: 7, bonus: 15, cost: 42000, quality: "上品", rare: true, marketWeight: 2 }
 ];
 
 const elixirPills = [
@@ -882,6 +897,8 @@ const defaultState = {
   goods: {},
   regionId: "greenHills",
   marketTrend: 0,
+  marketStockAge: -1,
+  marketStock: null,
   sectId: null,
   sectContribution: 0,
   sectReputation: 0,
@@ -1000,6 +1017,10 @@ function removeBreakPill(pillId) {
   if (state.breakPills[pillId] <= 0) delete state.breakPills[pillId];
 }
 
+function breakPillById(pillId) {
+  return breakthroughPills.find((item) => item.id === pillId);
+}
+
 function addGood(goodId, amount = 1) {
   state.goods[goodId] = (state.goods[goodId] ?? 0) + amount;
   notifyGain(goodById(goodId)?.name ?? "货品", amount, "item");
@@ -1030,9 +1051,21 @@ function elixirBuyPrice(pill) {
   return Math.max(1, Math.floor(pill.cost * trend * bargain));
 }
 
+function breakPillBuyPrice(pill) {
+  const trend = 1 + state.marketTrend * 0.05;
+  const bargain = 1 - Math.min(0.1, state.worldliness * 0.003);
+  const scarcity = pill.quality === "极品" ? 1.45 : pill.quality === "上品" ? 1.25 : 1;
+  return Math.max(1, Math.floor(pill.cost * trend * bargain * scarcity));
+}
+
 function elixirSellPrice(pill) {
   const trend = 1 + state.marketTrend * 0.04;
   return Math.max(1, Math.floor(pill.sell * trend));
+}
+
+function breakPillSellPrice(pill) {
+  const trend = 1 + state.marketTrend * 0.04;
+  return Math.max(1, Math.floor(pill.cost * 0.58 * trend));
 }
 
 function refreshMarketTrend() {
@@ -1043,6 +1076,58 @@ function marketLabel() {
   if (state.marketTrend >= 2) return "高涨";
   if (state.marketTrend <= -2) return "低迷";
   return "平稳";
+}
+
+function weightedPick(items, weightKey = "weight") {
+  const total = items.reduce((sum, item) => sum + Math.max(0, item[weightKey] ?? 1), 0);
+  if (total <= 0) return pick(items);
+  let point = Math.random() * total;
+  for (const item of items) {
+    point -= Math.max(0, item[weightKey] ?? 1);
+    if (point <= 0) return item;
+  }
+  return items[items.length - 1];
+}
+
+function buildMarketStock() {
+  const elixirCandidates = elixirPills
+    .filter((pill) => (pill.minRealm ?? 0) <= state.realm)
+    .map((pill) => ({ pill, weight: pill.rare ? 8 + state.worldliness + state.luck : 42 }));
+  const elixirCount = clamp(3 + Math.floor(state.realm / 2) + (roll(1, 100) <= 35 ? 1 : 0), 3, 6);
+  const elixirs = [];
+  while (elixirs.length < elixirCount && elixirCandidates.length) {
+    const chosen = weightedPick(elixirCandidates);
+    if (!elixirs.some((item) => item.id === chosen.pill.id)) {
+      elixirs.push({ id: chosen.pill.id, qty: chosen.pill.rare ? 1 : roll(1, 3) });
+    }
+    elixirCandidates.splice(elixirCandidates.indexOf(chosen), 1);
+  }
+
+  const target = targetRealmIndex();
+  const breakCandidates = breakthroughPills
+    .filter((pill) => pill.targetRealm === target && !pill.treasureOnly)
+    .filter((pill) => !pill.rare || roll(1, 100) <= 12 + state.luck + Math.floor(state.worldliness / 2))
+    .map((pill) => ({ pill, weight: pill.marketWeight ?? 1 }));
+  const breakPillCount = nextRealm() ? roll(1, state.realm >= 2 ? 2 : 1) : 0;
+  const breakPills = [];
+  while (breakPills.length < breakPillCount && breakCandidates.length) {
+    const chosen = weightedPick(breakCandidates);
+    if (!breakPills.some((item) => item.id === chosen.pill.id)) {
+      breakPills.push({ id: chosen.pill.id, qty: chosen.pill.rare ? 1 : roll(1, 2) });
+    }
+    breakCandidates.splice(breakCandidates.indexOf(chosen), 1);
+  }
+
+  return { elixirs, breakPills };
+}
+
+function ensureMarketStock(force = false) {
+  if (!state) return { elixirs: [], breakPills: [] };
+  if (force || !state.marketStock || state.marketStockAge !== state.age) {
+    state.marketStock = buildMarketStock();
+    state.marketStockAge = state.age;
+  }
+  return state.marketStock;
 }
 
 function goodsCount() {
@@ -1254,9 +1339,32 @@ function breakthroughChance(pill = bestBreakPillForTarget()) {
 function pickMarketPill() {
   const options = pillsForTarget();
   if (!options.length) return null;
-  const rare = options.find((pill) => pill.rare);
-  if (rare && roll(1, 100) <= 18 + state.luck * 2 + state.worldliness) return rare;
-  return options.find((pill) => !pill.rare) ?? options[0];
+  return weightedPick(options.map((pill) => ({ ...pill, marketWeight: pill.marketWeight ?? 1 })), "marketWeight");
+}
+
+function pickFoundBreakPill(kind) {
+  const target = targetRealmIndex();
+  const highChance = {
+    travel: 4,
+    social: 5,
+    dungeon: 14,
+    sectMission: 8,
+    herbGarden: 9,
+    sectTrial: 10,
+    demonTrial: 13,
+    blackMarket: 12,
+    raidTreasure: 16
+  }[kind] ?? 6;
+  const treasureChance = highChance + Math.floor(state.luck / 2) + Math.floor(state.realm / 2);
+  const allowTreasure = roll(1, 100) <= treasureChance;
+  const candidates = breakthroughPills
+    .filter((pill) => pill.targetRealm === target)
+    .filter((pill) => allowTreasure || (!pill.treasureOnly && pill.quality !== "极品"))
+    .map((pill) => {
+      const qualityWeight = pill.quality === "极品" ? 1 : pill.quality === "上品" ? 5 : pill.quality === "正品" ? 22 : 42;
+      return { ...pill, findWeight: qualityWeight + (kind === "blackMarket" && pill.rare ? 4 : 0) };
+    });
+  return candidates.length ? weightedPick(candidates, "findWeight") : null;
 }
 
 function pickMarketElixir() {
@@ -1314,7 +1422,7 @@ function maybeFindBreakthroughPill(kind) {
   };
   const chance = (chanceMap[kind] ?? 0) + Math.floor(state.luck / 2);
   if (roll(1, 100) > chance) return "";
-  const pill = pickMarketPill();
+  const pill = pickFoundBreakPill(kind);
   if (!pill) return "";
   addBreakPill(pill.id);
   return ` 你还意外得了一枚「${pill.name}」，下次冲击${nextRealm().name}可增加 ${pill.bonus}% 成功率。`;
@@ -1997,7 +2105,7 @@ function attemptBreakthrough() {
   if (pill) removeBreakPill(pill.id);
   const prepText = consumeBreakPreparations();
   passYears(1);
-  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
+  const pillBonus = pill ? Math.min(pill.bonus, 10 + state.realm * 2) : 0;
   const pillText = pill ? `你服下「${pill.name}」，丹力助推 ${pillBonus}%，此番成功率为 ${chance}%。${prepText}` : `未得破境丹护持，此番成功率仅 ${chance}%。${prepText}`;
 
   if (success) {
@@ -2141,7 +2249,7 @@ function worldBeastTide() {
 
 function worldAuctionRumor() {
   add(state, { worldliness: 2 });
-  if (roll(1, 100) <= 35 + state.luck) addBreakPill(pickMarketPill()?.id ?? "qi");
+  if (roll(1, 100) <= 35 + state.luck) addBreakPill(pickFoundBreakPill("social")?.id ?? "qi");
   else addGood("spiritOre", 1);
   log("坊市拍卖会传出消息，有修士私下转手珍稀材料。你花了些人情，换来一份小机缘。", "gold");
 }
@@ -2229,6 +2337,8 @@ function normalizeState(saved) {
     foundationFlaw: saved.foundationFlaw ?? 0,
     worldTension: saved.worldTension ?? 0,
     marketTrend: saved.marketTrend ?? 0,
+    marketStockAge: saved.marketStockAge ?? -1,
+    marketStock: saved.marketStock ?? null,
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
     log: saved.log ?? []
   };
@@ -2414,6 +2524,31 @@ function closeDetailModal() {
 
 function renderMarket() {
   if (!$("marketPanel")) return;
+  const stock = ensureMarketStock();
+  const buyElixirRows = stock.elixirs
+    .map((line) => {
+      const pill = elixirById(line.id);
+      if (!pill || line.qty <= 0) return "";
+      const price = elixirBuyPrice(pill);
+      const rareText = pill.rare ? "稀有" : "常见";
+      return `<div class="market-row buy-row">
+        <div><strong>${pill.name} <em>${rareText}</em></strong><span>${pill.effectText} · 余${line.qty}</span></div>
+        <div class="market-actions"><button data-buy-elixir="${pill.id}" type="button">买 ${price}</button></div>
+      </div>`;
+    })
+    .filter(Boolean);
+  const buyBreakRows = stock.breakPills
+    .map((line) => {
+      const pill = breakPillById(line.id);
+      if (!pill || line.qty <= 0) return "";
+      const price = breakPillBuyPrice(pill);
+      const target = realms[pill.targetRealm]?.name ?? "未知";
+      return `<div class="market-row buy-row rare-row">
+        <div><strong>${pill.name} <em>${pill.quality ?? "正品"}</em></strong><span>冲击${target} +${pill.bonus}% · 余${line.qty}</span></div>
+        <div class="market-actions"><button data-buy-break-pill="${pill.id}" type="button">买 ${price}</button></div>
+      </div>`;
+    })
+    .filter(Boolean);
   const goodsRows = tradeGoods
     .filter((good) => (state.goods[good.id] ?? 0) > 0)
     .map((good) => {
@@ -2446,14 +2581,19 @@ function renderMarket() {
       .filter((pill) => (state.breakPills[pill.id] ?? 0) > 0)
       .map((pill) => {
         const amount = state.breakPills[pill.id];
-        const price = Math.floor(pill.cost * 0.62);
+        const price = breakPillSellPrice(pill);
         return `<div class="market-row"><div><strong>${pill.name} x${amount}</strong><span>冲击${realms[pill.targetRealm].name} +${pill.bonus}%。</span></div><div class="market-actions"><button data-sell-break-pill="${pill.id}" type="button">卖1 ${price}</button>${amount > 1 ? `<button data-sell-break-pill-all="${pill.id}" type="button">全卖 ${price * amount}</button>` : ""}</div></div>`;
       })
   ].filter(Boolean);
   const rows = [...goodsRows, ...pillRows];
-  $("marketPanel").innerHTML = rows.length
-    ? `<div class="market-note">今日行情：${marketLabel()}，尘缘越高越会讲价。</div>${rows.join("")}`
-    : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`;
+  const buyRows = [...buyElixirRows, ...buyBreakRows];
+  $("marketPanel").innerHTML = `
+    <div class="market-note">今日行情：${marketLabel()}。丹铺每年换货，越好的破境丹越少见。</div>
+    <div class="market-section-title">丹铺货架</div>
+    ${buyRows.length ? buyRows.join("") : `<div class="market-empty">今日丹铺没有合用的丹药。</div>`}
+    <div class="market-section-title">你的可售物品</div>
+    ${rows.length ? rows.join("") : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`}
+  `;
 }
 
 function renderMap() {
@@ -2524,7 +2664,7 @@ function renderBreakNeed() {
       return `<div class="need-line ${owned >= line.amount ? "ok" : "bad"}"><span>${pillItem?.name ?? line.id}</span><strong>${owned}/${line.amount} +${line.bonus}%</strong></div>`;
     })
   ].join("") : "";
-  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
+  const pillBonus = pill ? Math.min(pill.bonus, 10 + state.realm * 2) : 0;
   const pillName = pill ? `${pill.name} +${pillBonus}%` : "无";
   const html = `${needHtml}
     <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
@@ -2536,6 +2676,63 @@ function renderBreakNeed() {
     ${config ? `<div class="need-line"><span>${config.name}</span><strong>${config.notes}</strong></div>${materialHtml}` : ""}`;
   $("breakNeed").innerHTML = html;
   $("detailBreakNeed").innerHTML = html;
+}
+
+function consumeMarketStock(type, itemId) {
+  const stock = ensureMarketStock();
+  const list = stock[type] ?? [];
+  const line = list.find((item) => item.id === itemId);
+  if (!line || line.qty <= 0) return false;
+  line.qty -= 1;
+  if (line.qty <= 0) {
+    const index = list.indexOf(line);
+    list.splice(index, 1);
+  }
+  return true;
+}
+
+function buyMarketElixir(pillId) {
+  const pill = elixirById(pillId);
+  const stock = ensureMarketStock().elixirs.find((item) => item.id === pillId);
+  if (!pill || !stock || stock.qty <= 0) {
+    log("丹铺今日已经没有这种丹药。", "danger");
+    render();
+    return;
+  }
+  const price = elixirBuyPrice(pill);
+  if (state.spiritStones < price) {
+    log(`「${pill.name}」开价 ${price} 灵石，你囊中羞涩，只能作罢。`, "danger");
+    render();
+    return;
+  }
+  consumeMarketStock("elixirs", pillId);
+  add(state, { spiritStones: -price, worldliness: 1 });
+  addElixirPill(pill.id);
+  log(`你花去 ${price} 灵石，购得一枚「${pill.name}」。${pill.desc}`, "gold");
+  save();
+  render();
+}
+
+function buyMarketBreakPill(pillId) {
+  const pill = breakPillById(pillId);
+  const stock = ensureMarketStock().breakPills.find((item) => item.id === pillId);
+  if (!pill || !stock || stock.qty <= 0) {
+    log("丹铺今日已经没有这种破境丹。", "danger");
+    render();
+    return;
+  }
+  const price = breakPillBuyPrice(pill);
+  if (state.spiritStones < price) {
+    log(`「${pill.name}」开价 ${price} 灵石，这种品质不是现在能轻易拿下的。`, "danger");
+    render();
+    return;
+  }
+  consumeMarketStock("breakPills", pillId);
+  add(state, { spiritStones: -price, worldliness: 1 });
+  addBreakPill(pill.id);
+  log(`你花去 ${price} 灵石，购得一枚「${pill.name}」。冲击${realms[pill.targetRealm].name}时可增加 ${pill.bonus}% 成功率。`, "gold");
+  save();
+  render();
 }
 
 function sellGood(goodId, amount = 1) {
@@ -2579,9 +2776,9 @@ function useElixirPill(pillId) {
 }
 
 function sellBreakPill(pillId, amount = 1) {
-  const pill = breakthroughPills.find((item) => item.id === pillId);
+  const pill = breakPillById(pillId);
   if (!pill || !state.breakPills[pillId]) return;
-  const price = Math.floor(pill.cost * 0.62);
+  const price = breakPillSellPrice(pill);
   const sold = Math.min(state.breakPills[pillId], amount);
   for (let index = 0; index < sold; index += 1) removeBreakPill(pillId);
   add(state, { spiritStones: price * sold, worldliness: Math.ceil(sold / 2) });
@@ -2650,6 +2847,16 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeDetailModal();
 });
 $("marketPanel").addEventListener("click", (event) => {
+  const buyElixirButton = event.target.closest("[data-buy-elixir]");
+  if (buyElixirButton) {
+    buyMarketElixir(buyElixirButton.dataset.buyElixir);
+    return;
+  }
+  const buyBreakPillButton = event.target.closest("[data-buy-break-pill]");
+  if (buyBreakPillButton) {
+    buyMarketBreakPill(buyBreakPillButton.dataset.buyBreakPill);
+    return;
+  }
   const sellGoodButton = event.target.closest("[data-sell-good]");
   if (sellGoodButton) {
     sellGood(sellGoodButton.dataset.sellGood);
@@ -2699,17 +2906,8 @@ $("usePillBtn").addEventListener("click", () => {
 });
 $("buyPillBtn").addEventListener("click", () => {
   if (!state || state.ended) return;
-  const pill = pickMarketElixir();
-  const price = elixirBuyPrice(pill);
-  if (state.spiritStones < price) {
-    log(`丹铺今日有「${pill.name}」，开价 ${price} 灵石。你囊中羞涩，只能作罢。`, "danger");
-    render();
-    return;
-  }
-  add(state, { spiritStones: -price, worldliness: 1 });
-  addElixirPill(pill.id);
-  log(`你在坊市丹铺花去 ${price} 灵石，购得一枚「${pill.name}」。${pill.desc}`, "gold");
-  save();
+  activeMobileTab = "market";
+  log("丹铺货架已经列在交易行里，看中哪一枚就直接点买。", "gold");
   render();
 });
 $("buyBreakPillBtn").addEventListener("click", () => {
@@ -2719,21 +2917,8 @@ $("buyBreakPillBtn").addEventListener("click", () => {
     render();
     return;
   }
-  const pill = pickMarketPill();
-  if (!pill) {
-    log("今日坊市无适合你的破境丹。", "danger");
-    render();
-    return;
-  }
-  if (state.spiritStones < pill.cost) {
-    log(`丹铺掌柜取出「${pill.name}」，开价 ${pill.cost} 灵石。你囊中羞涩，只能作罢。`, "danger");
-    render();
-    return;
-  }
-  add(state, { spiritStones: -pill.cost, worldliness: 1 });
-  addBreakPill(pill.id);
-  log(`你花去 ${pill.cost} 灵石，购得一枚「${pill.name}」。冲击${nextRealm().name}时可增加 ${pill.bonus}% 成功率。`, "gold");
-  save();
+  activeMobileTab = "market";
+  log(`适合冲击${nextRealm().name}的破境丹已列在丹铺货架。好品质很少见，价格也会高得离谱。`, "gold");
   render();
 });
 $("studyManualBtn").addEventListener("click", () => {
