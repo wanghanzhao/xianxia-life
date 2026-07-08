@@ -425,9 +425,9 @@ input {
 }
 
 .region-btn {
-  min-height: 86px;
-  padding: 10px;
-  text-align: left;
+  min-height: 52px;
+  padding: 10px 12px;
+  text-align: center;
 }
 
 .region-btn.active {
@@ -435,16 +435,8 @@ input {
   outline: 2px solid rgba(185, 138, 53, 0.18);
 }
 
-.region-btn strong,
-.region-btn span {
+.region-btn strong {
   display: block;
-}
-
-.region-btn span {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
 }
 
 .actions {
@@ -454,7 +446,7 @@ input {
 }
 
 .actions button {
-  min-height: 70px;
+  min-height: 58px;
   font-weight: 700;
 }
 
@@ -467,10 +459,11 @@ input {
 
 .choice-float {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
-  width: min(520px, calc(100vw - 32px));
+  width: min(560px, calc(100vw - 32px));
   max-height: min(70vh, 560px);
   overflow: auto;
   box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
@@ -702,12 +695,13 @@ input {
 
 .toast-stack {
   position: fixed;
-  right: 18px;
+  left: 50%;
   top: 18px;
+  transform: translateX(-50%);
   z-index: 40;
   display: grid;
   gap: 8px;
-  width: min(280px, calc(100vw - 28px));
+  width: min(340px, calc(100vw - 28px));
   pointer-events: none;
 }
 
@@ -1084,7 +1078,9 @@ input {
   .choice-float {
     left: 0;
     right: 0;
+    top: auto;
     bottom: 0;
+    transform: none;
     width: 100%;
     max-height: 72vh;
     border-radius: 8px 8px 0 0;
@@ -1148,8 +1144,10 @@ input {
 
   .toast-stack {
     top: auto;
-    right: 10px;
+    left: 50%;
+    right: auto;
     bottom: 70px;
+    transform: translateX(-50%);
     width: min(300px, calc(100vw - 20px));
   }
 }

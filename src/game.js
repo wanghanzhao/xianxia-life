@@ -239,7 +239,7 @@ const sects = {
     alignment: "正道",
     rank: "外门弟子",
     title: "青岚宗外门",
-    intro: "青岚宗以剑诀和药园立宗，规矩森严，却能护住低阶弟子。",
+    intro: "青岚宗以剑诀和药园立宗，规矩森严，资源稳定，却也有派系与温室之弊。",
     joinText: "你拜入青岚宗，成为外门弟子。宗门玉牌入手，从此山门有名，行事也多了规矩。"
   },
   bloodriver: {
@@ -248,8 +248,8 @@ const sects = {
     alignment: "魔道",
     rank: "记名弟子",
     title: "血河教记名",
-    intro: "血河教行事狠辣，讲究弱肉强食。资源来得快，反噬也来得快。",
-    joinText: "你收下血河令，成了血河教记名弟子。魔门不问来处，只看你够不够狠。"
+    intro: "血河教行事狠辣却并非无序，讲契约、实力与底线，资源来得快，血债也来得快。",
+    joinText: "你收下血河令，成了血河教记名弟子。魔门不问来处，只看你能不能守住自己的路。"
   }
 };
 
@@ -885,9 +885,14 @@ const defaultState = {
   sectId: null,
   sectContribution: 0,
   sectReputation: 0,
+  sectTrust: 0,
+  factionEntanglement: 0,
   righteousReputation: 0,
   demonicReputation: 0,
   notoriety: 0,
+  karma: 0,
+  shelterComfort: 0,
+  bloodDebt: 0,
   worldTension: 0,
   traits: [],
   inventory: [],
@@ -924,9 +929,14 @@ function add(target, patch) {
   target.cultivation = Math.max(0, target.cultivation);
   target.sectContribution = Math.max(0, target.sectContribution ?? 0);
   target.sectReputation = Math.max(0, target.sectReputation ?? 0);
+  target.sectTrust = clamp(target.sectTrust ?? 0, 0, 100);
+  target.factionEntanglement = clamp(target.factionEntanglement ?? 0, 0, 100);
   target.righteousReputation = Math.max(0, target.righteousReputation ?? 0);
   target.demonicReputation = Math.max(0, target.demonicReputation ?? 0);
   target.notoriety = Math.max(0, target.notoriety ?? 0);
+  target.karma = clamp(target.karma ?? 0, 0, 100);
+  target.shelterComfort = clamp(target.shelterComfort ?? 0, 0, 100);
+  target.bloodDebt = clamp(target.bloodDebt ?? 0, 0, 100);
   target.worldTension = clamp(target.worldTension ?? 0, 0, 100);
 }
 
@@ -1050,9 +1060,36 @@ function currentSect() {
   return state?.sectId ? sects[state.sectId] : null;
 }
 
+function sectRankLabel() {
+  const sect = currentSect();
+  if (!sect) return "散修";
+  const score = state.sectTrust + state.sectReputation * 6 + Math.floor(state.sectContribution / 12) + state.realm * 4;
+  if (sect.id === "qinglan") {
+    if (score >= 80) return "真传候选";
+    if (score >= 50) return "内门弟子";
+    if (score >= 25) return "外门骨干";
+    return "外门弟子";
+  }
+  if (score >= 80) return "血令执事";
+  if (score >= 50) return "血令弟子";
+  if (score >= 25) return "入坛弟子";
+  return "记名弟子";
+}
+
+function sectBurdenLabel() {
+  if (state.sectId === "qinglan" && state.shelterComfort >= 35) return "温室滞碍";
+  if (state.sectId === "qinglan" && state.factionEntanglement >= 35) return "派系牵连";
+  if (state.sectId === "bloodriver" && state.bloodDebt >= 35) return "血债缠身";
+  if (state.sectId === "bloodriver" && state.notoriety >= 6) return "榜上有名";
+  if (!state.sectId && state.worldliness >= 18) return "江湖熟面";
+  return "";
+}
+
 function identityLabel() {
   const sect = currentSect();
-  return sect ? sect.title : "散修";
+  const burden = sectBurdenLabel();
+  if (!sect) return burden ? `散修 · ${burden}` : "散修";
+  return `${sect.name}${sectRankLabel()}${burden ? ` · ${burden}` : ""}`;
 }
 
 function actionList() {
@@ -1069,9 +1106,14 @@ function notifyGain(key, amount, explicitType = "") {
     spiritStones: "灵石",
     pills: "清心丹",
     sectContribution: "宗门贡献",
+    sectTrust: "宗门信任",
+    factionEntanglement: "派系牵连",
     righteousReputation: "正道声望",
     demonicReputation: "魔道声望",
-    notoriety: "通缉"
+    notoriety: "通缉",
+    karma: "因果",
+    shelterComfort: "温室滞碍",
+    bloodDebt: "血债"
   };
   const label = labels[key] ?? (explicitType === "item" ? key : "");
   if (!label) return;
@@ -1320,6 +1362,8 @@ function doAction(action) {
     const gain = gainCultivation("cultivate");
     state.mind = clamp(state.mind + roll(-2, 3), 0, 100);
     add(state, { seclusionFatigue: -1 });
+    if (state.sectId === "qinglan") add(state, { shelterComfort: roll(0, 2) });
+    if (state.sectId === "bloodriver" && roll(1, 100) <= 28) add(state, { bloodDebt: -1 });
     passYears(1);
     log(`你静坐吐纳一年，炼化天地灵气，修为增长 ${gain}。`);
   }
@@ -1364,6 +1408,8 @@ function doAction(action) {
     state.mind -= roll(10, 24) + state.seclusionFatigue * 2;
     state.health -= state.mind < 25 ? roll(12, 28) + state.seclusionFatigue * 2 : roll(0, 8);
     state.seclusionFatigue = clamp(state.seclusionFatigue + 3, 0, 10);
+    if (state.sectId === "qinglan") add(state, { shelterComfort: roll(4, 9), factionEntanglement: -roll(0, 3) });
+    if (state.sectId === "bloodriver") add(state, { bloodDebt: -roll(0, 3), factionEntanglement: -roll(0, 2) });
     passYears(years);
     log(`你封山闭关十年，修为增长 ${gain}。${state.seclusionFatigue >= 6 ? "久不履尘世，道心渐滞。" : ""}${state.mind < 25 ? "心魔暗生，气血大损。" : ""}`, state.mind < 25 || state.seclusionFatigue >= 6 ? "danger" : "");
   }
@@ -1484,10 +1530,14 @@ function joinSect(sectId) {
   state.sectId = sectId;
   state.sectContribution = 20;
   state.sectReputation = 1;
+  state.sectTrust = sectId === "qinglan" ? 12 : 8;
+  state.factionEntanglement = 0;
+  state.shelterComfort = sectId === "qinglan" ? 6 : 0;
+  state.bloodDebt = sectId === "bloodriver" ? 4 : 0;
   if (!state.traits.includes(sect.title)) state.traits.push(sect.title);
   add(state, sectId === "qinglan"
-    ? { mind: 4, worldliness: 2, spiritStones: 40, righteousReputation: 3 }
-    : { power: 4, cultivation: 24, mind: -3, spiritStones: 30, demonicReputation: 3, notoriety: 1 });
+    ? { mind: 4, worldliness: 2, spiritStones: 40, righteousReputation: 3, karma: 1 }
+    : { power: 4, cultivation: 24, mind: -1, spiritStones: 30, demonicReputation: 3, notoriety: 1, karma: 1 });
 }
 
 function generatedContext(kind, baseGain = 0) {
@@ -1618,17 +1668,39 @@ function addPatchValue(patch, key, value) {
 }
 
 function applyKindFlavorToEffects(effects, ctx, style) {
+  if (!state.sectId && (ctx.kind === "travel" || ctx.kind === "dungeon" || ctx.kind === "social")) {
+    addPatchValue(effects, "worldliness", style === "bargain" || style === "rescue" ? roll(2, 6) : roll(0, 3));
+    if (style === "rescue") addPatchValue(effects, "karma", roll(2, 6));
+    if (style === "profit") addPatchValue(effects, "spiritStones", roll(8, 36));
+    if (style === "retreat") addPatchValue(effects, "mind", roll(1, 4));
+    if (style === "force" && roll(1, 100) <= 35) addPatchValue(effects, "notoriety", 1);
+  }
   if (ctx.kind === "sectMission" || ctx.kind === "herbGarden" || ctx.kind === "sectTrial") {
     addPatchValue(effects, "sectContribution", style === "retreat" ? roll(4, 10) : roll(10, 24));
     addPatchValue(effects, "sectReputation", roll(0, 1));
+    addPatchValue(effects, "sectTrust", style === "rescue" ? roll(5, 10) : style === "retreat" ? -roll(1, 4) : roll(1, 5));
     addPatchValue(effects, "righteousReputation", style === "rescue" ? roll(1, 2) : roll(0, 1));
+    if (style === "bargain" || style === "profit") addPatchValue(effects, "factionEntanglement", roll(4, 10));
+    if (style === "observe") addPatchValue(effects, "factionEntanglement", roll(0, 4));
+    if (style === "rescue") addPatchValue(effects, "karma", roll(2, 7));
     if (style === "profit") addPatchValue(effects, "mind", -roll(1, 4));
+    if (ctx.kind === "herbGarden" || style === "retreat" || style === "observe") addPatchValue(effects, "shelterComfort", roll(1, 5));
+    if (style === "force" || style === "rescue") addPatchValue(effects, "shelterComfort", -roll(1, 4));
   }
   if (ctx.kind === "demonTrial" || ctx.kind === "blackMarket" || ctx.kind === "raidTreasure") {
     addPatchValue(effects, "sectContribution", style === "retreat" ? roll(3, 8) : roll(10, 28));
     addPatchValue(effects, "sectReputation", roll(0, 1));
+    addPatchValue(effects, "sectTrust", style === "force" || style === "profit" ? roll(3, 8) : style === "rescue" ? roll(0, 4) : roll(1, 5));
     addPatchValue(effects, "demonicReputation", style === "rescue" ? roll(0, 1) : roll(1, 2));
-    if (style === "force" || style === "profit") addPatchValue(effects, "notoriety", roll(0, 2));
+    if (style === "force" || style === "profit") {
+      addPatchValue(effects, "notoriety", roll(0, 2));
+      addPatchValue(effects, "bloodDebt", roll(3, 9));
+    }
+    if (style === "bargain") addPatchValue(effects, "factionEntanglement", roll(3, 8));
+    if (style === "rescue") {
+      addPatchValue(effects, "karma", roll(2, 6));
+      addPatchValue(effects, "bloodDebt", -roll(1, 4));
+    }
   }
   if (ctx.kind === "herbGarden" && style !== "retreat") addPatchValue(effects, "mind", roll(1, 4));
   if (ctx.kind === "blackMarket" && style === "bargain") addPatchValue(effects, "spiritStones", -Math.min(state.spiritStones, roll(20, 70)));
@@ -1638,6 +1710,10 @@ function materializeLayeredChoice(style, ctx) {
   const blueprint = generatedChoiceStyles[style] ?? generatedChoiceStyles.observe;
   const effects = blueprint.effect(ctx);
   applyKindFlavorToEffects(effects, ctx, style);
+  const optionPressure = clamp(ctx.pressure + roll(-3, 5) + (style === "force" || style === "profit" ? 2 : 0) - (style === "retreat" ? 5 : 0), 1, 18);
+  const optionDeath = Math.max(0, blueprint.death(ctx) + roll(-4, 6) + Math.floor(optionPressure / 4));
+  const riskTone = optionDeath >= 38 ? "生死难料" : optionDeath >= 22 ? "暗藏杀机" : optionDeath >= 10 ? "不算稳妥" : "尚可周旋";
+  const rewardTone = style === "profit" ? "重利" : style === "rescue" ? "重义" : style === "observe" ? "重察" : style === "retreat" ? "避劫" : style === "bargain" ? "周旋" : "硬闯";
   const secretRevealed = roll(1, 100) <= 38 + Math.floor(state.luck / 2) + (style === "observe" ? 18 : 0);
   const twist = secretRevealed ? `你看穿暗线：${ctx.secret}。` : pick([
     "局势比表面更乱，你只能吃下眼前这份结果。",
@@ -1647,11 +1723,11 @@ function materializeLayeredChoice(style, ctx) {
   const pressureText = ctx.pressure >= 10 ? "局势很紧，稍慢一步就会翻车。" : "局势尚有回旋余地。";
   return {
     label: pick(blueprint.labels),
-    hint: `${pick(blueprint.hints)} · ${ctx.region.name}危险 ${ctx.region.danger} · 变数 ${ctx.pressure}`,
+    hint: `${rewardTone} · ${riskTone}`,
     result: `${pick(blueprint.results)}${pressureText}${twist}`,
     type: blueprint.type,
     effects,
-    deathChance: blueprint.death(ctx),
+    deathChance: optionDeath,
     generatedStyle: style
   };
 }
@@ -1735,8 +1811,8 @@ function doSectTeach() {
   passYears(1);
   if (state.ended) return;
   const practice = roll(18, 42) + state.realm * 10 + state.insight * 2;
-  add(state, { sectContribution: -18, dao: roll(2, 5), mind: roll(5, 10), insight: roll(0, 1), cultivation: practice, seclusionFatigue: -2 });
-  log(`你以贡献换得师门长老半日指点，往日关隘忽然明白了几分，修为也增长 ${practice}。`, "gold");
+  add(state, { sectContribution: -18, sectTrust: roll(1, 3), shelterComfort: roll(1, 3), dao: roll(2, 5), mind: roll(5, 10), insight: roll(0, 1), cultivation: practice, seclusionFatigue: -2 });
+  log(`你以贡献换得师门长老半日指点，往日关隘忽然明白了几分，修为也增长 ${practice}。山门庇护很好，却也容易让人忘了山外风雨。`, "gold");
 }
 
 function doHerbGarden() {
@@ -1773,9 +1849,9 @@ function doHideCultivate() {
   const baseGain = gainCultivation("cultivate");
   const extraGain = roll(12, 28);
   const daoGain = roll(0, 2);
-  add(state, { mind: roll(8, 16), dao: daoGain, health: roll(4, 12), seclusionFatigue: -3, notoriety: -1, cultivation: extraGain });
+  add(state, { mind: roll(8, 16), dao: daoGain, health: roll(4, 12), seclusionFatigue: -3, notoriety: -1, bloodDebt: -roll(1, 4), cultivation: extraGain });
   passYears(1);
-  log(`你避入荒山潜修，压下血煞反噬，修为增长 ${baseGain + extraGain}${daoGain ? `，悟道增长 ${daoGain}` : ""}。`);
+  log(`你避入荒山潜修，压下血煞反噬，也让几笔旧账暂时冷了下去。修为增长 ${baseGain + extraGain}${daoGain ? `，悟道增长 ${daoGain}` : ""}。`);
 }
 
 function doBloodForge() {
@@ -1786,8 +1862,8 @@ function doBloodForge() {
   passYears(1);
   if (state.ended) return;
   const daoGain = roll(0, 2) + (roll(1, 100) <= 22 + state.realm * 4 ? 1 : 0);
-  add(state, { sectContribution: -24, demonicReputation: 1, notoriety: 1, power: roll(8, 14), dao: daoGain, cultivation: roll(42, 88) + state.realm * 10, health: -roll(8, 22), mind: -roll(2, 8) });
-  log(`你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截${daoGain ? "，生死之间也悟出几分狠理" : ""}。`, "danger");
+  add(state, { sectContribution: -24, sectTrust: roll(1, 4), demonicReputation: 1, notoriety: 1, bloodDebt: roll(2, 6), power: roll(8, 14), dao: daoGain, cultivation: roll(42, 88) + state.realm * 10, health: -roll(8, 22), mind: -roll(1, 6) });
+  log(`你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截${daoGain ? "，生死之间也悟出几分狠理" : ""}。血河给你力量，也把账记得清清楚楚。`, "danger");
 }
 
 function consumeBreakPreparations() {
@@ -1894,12 +1970,13 @@ function checkRandomCalamity() {
 
 function checkWorldIncident() {
   if (state.ended || state.pendingChoice) return;
-  const baseChance = 5 + Math.floor(state.worldTension / 12) + Math.floor(state.notoriety / 4);
+  const sectPressure = Math.floor((state.factionEntanglement + state.shelterComfort + state.bloodDebt) / 24);
+  const baseChance = 5 + Math.floor(state.worldTension / 12) + Math.floor(state.notoriety / 4) + sectPressure;
   if (roll(1, 100) > baseChance) return;
 
   const incidents = [];
-  if (state.sectId === "qinglan") incidents.push(worldSectDraft);
-  if (state.sectId === "bloodriver") incidents.push(worldDemonOrder);
+  if (state.sectId === "qinglan") incidents.push(worldSectDraft, worldQinglanFaction);
+  if (state.sectId === "bloodriver") incidents.push(worldDemonOrder, worldBloodriverDebt);
   if (state.notoriety >= 4) incidents.push(worldBountyHunters);
   incidents.push(worldDemonRaid, worldBeastTide, worldAuctionRumor);
   pick(incidents)();
@@ -1908,8 +1985,18 @@ function checkWorldIncident() {
 
 function worldSectDraft() {
   const contribution = roll(12, 26);
-  add(state, { sectContribution: contribution, righteousReputation: 2, spiritStones: roll(20, 48), health: -roll(0, 14) });
+  add(state, { sectContribution: contribution, sectTrust: roll(2, 6), righteousReputation: 2, spiritStones: roll(20, 48), shelterComfort: -roll(1, 4), health: -roll(0, 14) });
   log(`宗门临时征召外门弟子巡防边境。你随队奔走数月，得贡献 ${contribution}，也见识了正魔边线的暗潮。`, "gold");
+}
+
+function worldQinglanFaction() {
+  if (state.factionEntanglement >= 30 && roll(1, 100) <= 45) {
+    add(state, { sectTrust: -roll(2, 6), factionEntanglement: roll(4, 12), mind: -roll(3, 8), dao: roll(0, 2) });
+    log("青岚宗内两位执事为资源名额暗中角力，你被旧人情牵进去。规矩仍在，人心却不总是清明。", "danger");
+    return;
+  }
+  add(state, { sectTrust: roll(1, 4), factionEntanglement: roll(1, 5), karma: roll(0, 2), mind: roll(0, 4) });
+  log("青岚宗议事堂传来风声，正道山门也有人情与派系。你小心周旋，既得照拂，也多了一点牵连。", "gold");
 }
 
 function worldDemonOrder() {
@@ -1917,8 +2004,18 @@ function worldDemonOrder() {
     die(state, "血河教密令你夜袭一处散修据点，却不料对方早有埋伏。");
     return;
   }
-  add(state, { demonicReputation: 2, notoriety: 2, sectContribution: roll(14, 30), spiritStones: roll(28, 80), mind: -roll(2, 8) });
-  log("血河教密令传来，你被迫参与一次夜袭。收获不少，通缉榜上也多了一笔模糊记录。", "danger");
+  add(state, { demonicReputation: 2, notoriety: 2, sectTrust: roll(2, 6), bloodDebt: roll(4, 10), sectContribution: roll(14, 30), spiritStones: roll(28, 80), mind: -roll(1, 6) });
+  log("血河教密令传来，你参与一次夜袭。收获不少，教内信任涨了，通缉榜和血债也各添一笔。", "danger");
+}
+
+function worldBloodriverDebt() {
+  if (state.bloodDebt >= 30 && roll(1, 100) <= 45) {
+    add(state, { health: -roll(8, 22), mind: -roll(2, 7), bloodDebt: -roll(4, 10), power: roll(1, 4) });
+    log("旧日血债寻上门来，对方并非善类，却也不是毫无缘由。你杀出一条路，心中多了些说不清的沉默。", "danger");
+    return;
+  }
+  add(state, { sectTrust: roll(1, 5), factionEntanglement: roll(1, 5), demonicReputation: 1, karma: roll(0, 2) });
+  log("血河教坛内传来换令，魔门也有规矩和账本。你替人了结一桩旧约，得了信任，也多了一点因果。", "gold");
 }
 
 function worldBountyHunters() {
@@ -2011,9 +2108,14 @@ function normalizeState(saved) {
     sectId: saved.sectId ?? null,
     sectContribution: saved.sectContribution ?? 0,
     sectReputation: saved.sectReputation ?? 0,
+    sectTrust: saved.sectTrust ?? 0,
+    factionEntanglement: saved.factionEntanglement ?? 0,
     righteousReputation: saved.righteousReputation ?? 0,
     demonicReputation: saved.demonicReputation ?? 0,
     notoriety: saved.notoriety ?? 0,
+    karma: saved.karma ?? 0,
+    shelterComfort: saved.shelterComfort ?? 0,
+    bloodDebt: saved.bloodDebt ?? 0,
     worldTension: saved.worldTension ?? 0,
     marketTrend: saved.marketTrend ?? 0,
     pendingChoice: saved.pendingChoice?.choices ? saved.pendingChoice : null,
@@ -2113,12 +2215,16 @@ function render() {
     ["丹药", elixirCount()],
     ["破境丹", Object.values(state.breakPills).reduce((sum, amount) => sum + amount, 0)],
     ["宗门贡献", state.sectContribution],
+    ["宗门信任", state.sectTrust],
+    ["派系牵连", state.factionEntanglement],
     ["正道声望", state.righteousReputation],
     ["魔道声望", state.demonicReputation],
     ["通缉", state.notoriety],
+    ["因果", state.karma],
+    ["温室滞碍", state.shelterComfort],
+    ["血债", state.bloodDebt],
     ["货品", goodsCount()],
     ["地域", currentRegion().name],
-    ["妖险", currentRegion().danger],
     ["破境筹备", `${breakthroughPrepScore()}%`],
     ["尘缘", state.worldliness],
     ["行情", marketLabel()],
@@ -2129,7 +2235,7 @@ function render() {
 
   $("actions").innerHTML = actionList().map((action) => `
     <button data-action="${action.id}" type="button" ${state.ended ? "disabled" : ""}>
-      ${action.name}<br><small>${action.desc}</small>
+      ${action.name}
     </button>
   `).join("");
 
@@ -2235,18 +2341,11 @@ function renderMarket() {
 function renderMap() {
   if (!$("mapRegions")) return;
   const region = currentRegion();
-  $("regionHint").textContent = `当前：${region.name} · 危险 ${region.danger}`;
+  $("regionHint").textContent = `当前：${region.name}`;
   $("mapRegions").innerHTML = mapRegions.map((item) => {
     const locked = state.realm < item.minRealm;
-    const loot = [...item.travelLoot, ...item.dungeonLoot]
-      .map(([goodId]) => goodById(goodId)?.name)
-      .filter(Boolean)
-      .filter((name, index, list) => list.indexOf(name) === index)
-      .slice(0, 3)
-      .join(" / ");
     return `<button class="region-btn ${item.id === region.id ? "active" : ""}" data-region="${item.id}" type="button" ${locked ? "disabled" : ""}>
       <strong>${item.name}${locked ? ` · ${realms[item.minRealm].name}解锁` : ""}</strong>
-      <span>危险 ${item.danger} · ${loot}</span>
     </button>`;
   }).join("");
   document.querySelectorAll("[data-region]").forEach((button) => {
