@@ -83,11 +83,108 @@ const elixirPills = [
 const tradeGoods = [
   { id: "spiritHerb", name: "灵草", basePrice: 24, desc: "炼丹常用材料，坊市需求稳定。" },
   { id: "beastCore", name: "妖兽内丹", basePrice: 58, desc: "炼器、炼丹皆可用，秘境中较常见。" },
+  { id: "beastHide", name: "妖兽皮骨", basePrice: 42, desc: "可卖给炼器铺，也能充作低阶护身材料。" },
+  { id: "demonBone", name: "妖骨", basePrice: 120, desc: "凶煞难驯，魔修和炼器师都愿意收。" },
+  { id: "thunderCrystal", name: "雷纹晶", basePrice: 180, desc: "含天雷残意，是高阶破境时的稀罕辅材。" },
+  { id: "fiveElementJade", name: "五行玉", basePrice: 220, desc: "五行灵气交汇凝成，化神以后尤其珍贵。" },
   { id: "spiritOre", name: "灵矿", basePrice: 46, desc: "阵器铺常年收购。" },
   { id: "manual", name: "功法残卷", basePrice: 110, desc: "可卖灵石，也可参悟换悟道。" },
   { id: "formationShard", name: "阵盘残片", basePrice: 82, desc: "懂阵法的人愿出高价。" },
   { id: "rareManual", name: "古修功法", basePrice: 260, desc: "价值高，但参悟也可能走火入魔。" }
 ];
+
+const mapRegions = [
+  {
+    id: "greenHills",
+    name: "青溪山",
+    desc: "灵草多，妖兽弱，适合低阶修士攒第一桶资源。",
+    danger: 4,
+    minRealm: 0,
+    travelLoot: [["spiritHerb", 46], ["manual", 9]],
+    dungeonLoot: [["spiritHerb", 32], ["beastCore", 24], ["beastHide", 22], ["manual", 10]]
+  },
+  {
+    id: "blackPine",
+    name: "黑松岭",
+    desc: "狼妖与山魈盘踞，内丹、皮骨较常见。",
+    danger: 13,
+    minRealm: 0,
+    travelLoot: [["spiritHerb", 22], ["beastHide", 24], ["beastCore", 16]],
+    dungeonLoot: [["beastCore", 42], ["beastHide", 38], ["spiritOre", 18], ["manual", 12]]
+  },
+  {
+    id: "fallenStarSea",
+    name: "坠星海",
+    desc: "乱礁深海，妖兽凶横，常见灵矿与阵盘残片。",
+    danger: 24,
+    minRealm: 1,
+    travelLoot: [["spiritOre", 30], ["beastCore", 22], ["formationShard", 12]],
+    dungeonLoot: [["beastCore", 46], ["formationShard", 28], ["spiritOre", 34], ["rareManual", 8]]
+  },
+  {
+    id: "ancientRuin",
+    name: "古修遗府",
+    desc: "禁制残破但杀机未散，功法与阵道机缘更重。",
+    danger: 34,
+    minRealm: 2,
+    travelLoot: [["manual", 24], ["formationShard", 22], ["spiritOre", 16]],
+    dungeonLoot: [["rareManual", 20], ["formationShard", 42], ["fiveElementJade", 12], ["demonBone", 14]]
+  },
+  {
+    id: "thunderMarsh",
+    name: "雷泽妖原",
+    desc: "雷暴与大妖同在，能出高阶破境材料，也最容易出事。",
+    danger: 46,
+    minRealm: 3,
+    travelLoot: [["thunderCrystal", 18], ["beastCore", 28], ["demonBone", 18]],
+    dungeonLoot: [["thunderCrystal", 34], ["fiveElementJade", 22], ["demonBone", 34], ["rareManual", 10]]
+  }
+];
+
+const breakthroughPreparations = {
+  1: {
+    name: "感气入门",
+    materials: [{ id: "spiritHerb", amount: 1, bonus: 5 }],
+    elixirs: [{ id: "qingxin", amount: 1, bonus: 5 }],
+    notes: "低阶重在稳住心神，灵草、清心丹就能帮上忙。"
+  },
+  2: {
+    name: "筑基筑台",
+    materials: [{ id: "spiritHerb", amount: 2, bonus: 7 }, { id: "beastCore", amount: 1, bonus: 8 }],
+    elixirs: [{ id: "ningshen", amount: 1, bonus: 7 }, { id: "yangyuan", amount: 1, bonus: 5 }],
+    notes: "筑基要补经脉、定神识，材料和丹药缺一类都很虚。"
+  },
+  3: {
+    name: "凝丹火候",
+    materials: [{ id: "beastCore", amount: 2, bonus: 9 }, { id: "spiritOre", amount: 1, bonus: 6 }, { id: "manual", amount: 1, bonus: 6 }],
+    elixirs: [{ id: "yulu", amount: 1, bonus: 7 }, { id: "ningshen", amount: 1, bonus: 6 }],
+    notes: "结丹不止靠丹药，妖丹火候、功法理解和护身资源都要有。"
+  },
+  4: {
+    name: "碎丹化婴",
+    materials: [{ id: "rareManual", amount: 1, bonus: 8 }, { id: "formationShard", amount: 2, bonus: 8 }, { id: "demonBone", amount: 1, bonus: 6 }],
+    elixirs: [{ id: "yulu", amount: 1, bonus: 7 }, { id: "ningshen", amount: 2, bonus: 8 }],
+    notes: "元婴关要护住神魂，阵法、功法、神识丹药都能续一口气。"
+  },
+  5: {
+    name: "五气炼神",
+    materials: [{ id: "fiveElementJade", amount: 2, bonus: 10 }, { id: "rareManual", amount: 1, bonus: 8 }, { id: "thunderCrystal", amount: 1, bonus: 7 }],
+    elixirs: [{ id: "yulu", amount: 2, bonus: 8 }, { id: "ningshen", amount: 2, bonus: 8 }],
+    notes: "化神以后开始讲五行与神魂圆融，单靠硬冲几乎是在赌命。"
+  },
+  6: {
+    name: "合道归一",
+    materials: [{ id: "fiveElementJade", amount: 3, bonus: 10 }, { id: "thunderCrystal", amount: 2, bonus: 9 }, { id: "formationShard", amount: 3, bonus: 7 }],
+    elixirs: [{ id: "yulu", amount: 2, bonus: 7 }],
+    notes: "合道要把一身所学合成自己的路，资源只能铺路，悟道才是门槛。"
+  },
+  7: {
+    name: "引劫渡身",
+    materials: [{ id: "thunderCrystal", amount: 4, bonus: 12 }, { id: "fiveElementJade", amount: 3, bonus: 10 }, { id: "demonBone", amount: 2, bonus: 6 }],
+    elixirs: [{ id: "yulu", amount: 3, bonus: 8 }],
+    notes: "渡劫就是拿命向天问道，雷材、护身法阵和心境缺了都危险。"
+  }
+};
 
 const origins = [
   {
@@ -619,6 +716,147 @@ const choiceBlueprints = {
   ]
 };
 
+const generatedEventKinds = new Set([
+  "travel",
+  "dungeon",
+  "social",
+  "sectMission",
+  "herbGarden",
+  "sectTrial",
+  "demonTrial",
+  "blackMarket",
+  "raidTreasure"
+]);
+
+const eventLayers = {
+  travel: {
+    title: ["山路异响", "雨夜灯影", "溪谷旧怨", "荒亭问路", "灵潮余波", "陌路同行"],
+    places: ["野渡口", "废弃驿站", "青石山道", "雾中竹林", "乱葬坡外", "临时坊市", "河湾药田"],
+    actors: ["负伤散修", "采药少年", "蒙面剑客", "逃难凡人", "沉默老妪", "异乡炼器师", "巡山小队"],
+    conflicts: ["被妖兽追逼", "怀中藏着来路不明的玉盒", "正被人诬为邪修", "想用假残卷换你的丹药", "看似求救，眼神却不断扫向你的行囊", "守着一处刚露头的灵泉"],
+    secrets: ["玉盒内有半枚阵盘", "追兵其实是旧友所雇", "附近埋着禁制残钉", "灵泉下压着妖骨", "对方身上有宗门暗记", "这件事会牵出坊市管事"]
+  },
+  dungeon: {
+    title: ["秘境裂隙", "古府开门", "妖巢回声", "残阵复燃", "深井血光", "石殿分赃"],
+    places: ["古修石殿", "塌陷矿洞", "水下洞府", "妖兽巢穴", "残破药园", "雷击祭坛", "地下暗河"],
+    actors: ["临时队友", "受伤阵师", "守宝妖兽", "失踪同门", "夺宝散修", "半疯傀儡师", "被困商队"],
+    conflicts: ["核心禁制忽然合拢", "有人暗中改了退路标记", "重宝和伤者只能先顾一边", "妖兽幼崽挡在出口前", "队伍分赃前已经互相猜忌", "古修残念要你立誓才放行"],
+    secrets: ["真正的重宝在外围废匣", "伤者身上有破阵钥匙", "妖兽是在护巢不是守宝", "退路旁藏有第二道门", "残念只认心境不认修为", "此地灵材会引来下一波人"]
+  },
+  social: {
+    title: ["茶楼论道", "坊市旧识", "雨棚闲谈", "拍卖余波", "江边问心", "酒肆风声"],
+    places: ["坊市茶楼", "丹铺后院", "拍卖会偏厅", "渡口雨棚", "小城酒肆", "山门脚下"],
+    actors: ["落魄长老", "年轻丹师", "异乡女修", "嘴碎牙人", "青岚外门", "血河行走", "凡人商队头领"],
+    conflicts: ["抛出一个真假难辨的消息", "请你替他传一句话", "想用人情换你的沉默", "公开与你辩道", "把一桩旧案推到你面前", "暗示某宗门正在招人"],
+    secrets: ["消息只对低阶修士有用", "传话会得罪另一方", "旧案里正邪两边都不干净", "辩道者故意试你心性", "人情以后会变成债", "旁听者才是真正做局的人"]
+  },
+  sectMission: {
+    title: ["宗门外务", "巡山令", "药谷急报", "护送玉简", "外门纠纷", "山门夜哨"],
+    places: ["青岚宗外山", "宗门药谷", "山门石阶", "附属小镇", "藏经楼偏院", "试炼竹海"],
+    actors: ["外门执事", "记名弟子", "被罚师兄", "药园管事", "来访散修", "沉默师姐", "凡人供奉"],
+    conflicts: ["要求你护送一份不能拆看的玉简", "有人偷采灵草却像是另有隐情", "小比前夜有人暗中下药", "外山妖兽突然绕开阵法", "执事把麻烦差事推给你", "同门请你帮他遮掩一次过错"],
+    secrets: ["玉简内容会牵出派系争执", "偷草者是为救人", "下药者未必是魔修", "阵法漏洞来自宗内", "执事在试探你是否可靠", "遮掩过错会留下把柄"]
+  },
+  herbGarden: {
+    title: ["药园异动", "灵虫入畦", "夜半花开", "药香失衡", "丹房催草"],
+    places: ["青岚药园", "温养灵田", "丹房侧院", "灵泉渠边", "药庐竹棚"],
+    actors: ["药园管事", "丹房童子", "偷草灵兽", "受罚同门", "老药农", "外来丹师"],
+    conflicts: ["一株灵草提前开花", "灵虫只咬某一垄药田", "有人要你私留一半药材", "丹房急需药引但手续不齐", "灵泉水脉忽然变浊"],
+    secrets: ["提前开花是地气异常", "灵虫被药粉引来", "私留药材是派系试探", "药引关系到救人", "水脉下有妖兽蜕皮"]
+  },
+  sectTrial: {
+    title: ["门内小比", "外门演武", "护场风波", "剑台争名", "同门挑战"],
+    places: ["外门演武场", "青石剑台", "执事看台", "试剑竹林", "山门广场"],
+    actors: ["外门强手", "临阵怯场的师弟", "看台执事", "暗中下注的弟子", "旧识对手", "受伤却不肯退的同门"],
+    conflicts: ["有人在兵器上动了手脚", "对手故意激怒你", "一场比试关系到资源名额", "看台突然要求你护场", "同门求你放水", "胜者会被派去危险任务"],
+    secrets: ["动手脚的人来自同一派系", "对手是在掩饰伤势", "资源名额早被人盯上", "护场才是真正考核", "放水会影响道心", "危险任务也藏着机缘"]
+  },
+  demonTrial: {
+    title: ["魔窟试炼", "血雾开门", "残魂问心", "夜祭余烬", "骨桥争渡"],
+    places: ["血河魔窟", "骨桥尽头", "阴风石门", "残魂祭坛", "黑水地牢", "赤纹峡谷"],
+    actors: ["血河护法", "同门竞争者", "被囚散修", "旧日残魂", "妖化魔徒", "沉默执灯人"],
+    conflicts: ["护法只给一个活名额", "残魂用你最怕的事问心", "被囚者愿以功法换生路", "同门邀你联手后再分胜负", "魔气突然反噬经脉", "出口需要有人断后"],
+    secrets: ["活名额只是吓人的规矩", "残魂真正考的是定力", "被囚者未必无辜", "同门也留了后手", "魔气源头是一枚妖骨", "断后者能看见暗门"]
+  },
+  blackMarket: {
+    title: ["黑市暗线", "鬼摊开张", "夜船交易", "假丹风波", "密信换物"],
+    places: ["地下黑市", "夜渡船舱", "破庙鬼摊", "赌石暗巷", "丹铺暗门"],
+    actors: ["黑市牙人", "蒙面丹师", "血河暗线", "正道卧底", "卖假丹的摊主", "负债散修"],
+    conflicts: ["有人兜售来路不明的破境丹", "暗线要你验一封密信", "正道卧底差点认出你", "摊主把假货卖给新人", "牙人要求先交押金", "货物里混着追踪香"],
+    secrets: ["破境丹只有半真", "密信会改变宗门任务", "卧底也在查血河叛徒", "新人背后有高手", "押金是筛人手段", "追踪香来自黑市内部"]
+  },
+  raidTreasure: {
+    title: ["夺宝伏击", "荒岭截道", "夜雨分赃", "残图争夺", "灵舟暗袭"],
+    places: ["荒岭窄道", "破庙后山", "夜雨山口", "灵舟渡口", "乱石峡", "废矿外坡"],
+    actors: ["携宝散修", "护货商队", "血河同伴", "正道追兵", "受伤仇家", "路过凡人车队"],
+    conflicts: ["目标身边有无辜凡人", "同伴想杀人灭口", "宝物其实已经被调包", "正道追兵比预计来得更快", "目标愿以情报买命", "伏击点下方藏着妖兽巢"],
+    secrets: ["凡人车队中有修士亲眷", "同伴早被人收买", "调包者就在附近", "追兵只想抓主谋", "情报指向古修遗府", "妖兽会被血腥味引出"]
+  }
+};
+
+const generatedChoiceStyles = {
+  force: {
+    labels: ["正面破局", "强行出手", "以力压局", "拔剑抢先"],
+    hints: ["修为与战力收益高，伤势和仇怨也重", "直接，但风险不低", "适合战力足时"],
+    results: ["你不再犹疑，抢在局势失控前正面压了上去。", "你以最硬的方式破局，周围人终于明白你不是软柿子。"],
+    type: "danger",
+    effect: (ctx) => ({ cultivation: roll(22, 62) + ctx.danger, power: roll(3, 9), health: -roll(8, 26) - ctx.pressure, mind: -roll(0, 5) }),
+    death: (ctx) => roll(6, 18) + Math.floor(ctx.danger / 4)
+  },
+  observe: {
+    labels: ["先看暗线", "按兵不动", "细查破绽", "顺势试探"],
+    hints: ["收益较稳，偏悟道与心境", "可能发现隐藏线索", "风险较低"],
+    results: ["你没有急着伸手，而是把人情、脚印和话里的破绽一一记下。", "你在旁观里看清了真正的关窍，反倒避开了一处坑。"],
+    type: "gold",
+    effect: (ctx) => ({ dao: roll(1, 4), mind: roll(2, 8), worldliness: roll(0, 3), cultivation: roll(8, 24) + Math.floor(ctx.danger / 3), health: -roll(0, 8) }),
+    death: (ctx) => roll(0, 5) + Math.floor(ctx.danger / 10)
+  },
+  bargain: {
+    labels: ["谈条件", "拿人情换路", "以利相诱", "借势周旋"],
+    hints: ["偏灵石、尘缘和资源", "会消耗或牵出人情", "结果波动较大"],
+    results: ["你把话说得半真半假，终于在缝隙里换到了一点实利。", "你没有马上动手，而是把这桩事做成了一笔交易。"],
+    type: "gold",
+    effect: (ctx) => ({ spiritStones: roll(18, 80) + ctx.pressure * 2, worldliness: roll(2, 7), mind: -roll(0, 4), dao: roll(0, 2) }),
+    death: (ctx) => roll(0, 8) + Math.floor(ctx.danger / 12)
+  },
+  rescue: {
+    labels: ["先救人", "护住弱者", "替人断后", "接下因果"],
+    hints: ["心境与声望较高，但可能失去宝物", "正邪都可以选，只看本心", "有受伤风险"],
+    results: ["你把最显眼的好处暂时放下，先护住了眼前的人。", "你接住了这份因果。旁人未必懂，但你心里清楚自己为何出手。"],
+    type: "gold",
+    effect: (ctx) => ({ mind: roll(4, 11), worldliness: roll(3, 8), righteousReputation: roll(0, 2), cultivation: roll(8, 28), health: -roll(6, 22) }),
+    death: (ctx) => roll(4, 16) + Math.floor(ctx.danger / 5)
+  },
+  profit: {
+    labels: ["先取资源", "趁乱搜宝", "盯住值钱物", "截下一份好处"],
+    hints: ["资源收益高，心境或名声可能受损", "适合缺灵石时", "可能留下后患"],
+    results: ["你没有追求漂亮名声，只在混乱里取走最实际的那份好处。", "你盯住了真正值钱的东西，出手很快，也很冷静。"],
+    type: "gold",
+    effect: (ctx) => ({ spiritStones: roll(38, 130), cultivation: roll(10, 34), mind: -roll(1, 8), notoriety: ctx.kind === "raidTreasure" || ctx.kind === "demonTrial" ? roll(0, 2) : 0 }),
+    death: (ctx) => roll(4, 14) + Math.floor(ctx.danger / 6)
+  },
+  retreat: {
+    labels: ["见势便退", "不接此局", "先保命", "收手离场"],
+    hints: ["收益低，但保命", "适合状态差时", "少沾因果"],
+    results: ["你压下贪念退了出来。也许错过机缘，也许避过死劫。", "你没有把自己押进这局里，只带着一点余波离开。"],
+    type: "",
+    effect: () => ({ mind: roll(2, 7), seclusionFatigue: -roll(1, 2), health: roll(0, 6) }),
+    death: () => 0
+  }
+};
+
+const kindChoiceStyles = {
+  travel: ["force", "observe", "bargain", "rescue", "profit", "retreat"],
+  dungeon: ["force", "observe", "rescue", "profit", "retreat"],
+  social: ["observe", "bargain", "rescue", "profit", "retreat"],
+  sectMission: ["force", "observe", "bargain", "rescue", "retreat"],
+  herbGarden: ["observe", "bargain", "rescue", "profit", "retreat"],
+  sectTrial: ["force", "observe", "bargain", "rescue", "retreat"],
+  demonTrial: ["force", "observe", "bargain", "rescue", "profit", "retreat"],
+  blackMarket: ["observe", "bargain", "profit", "retreat"],
+  raidTreasure: ["force", "observe", "bargain", "rescue", "profit", "retreat"]
+};
+
 const defaultState = {
   name: "青玄",
   gender: "male",
@@ -642,6 +880,7 @@ const defaultState = {
   elixirPills: {},
   breakPills: {},
   goods: {},
+  regionId: "greenHills",
   marketTrend: 0,
   sectId: null,
   sectContribution: 0,
@@ -785,6 +1024,28 @@ function goodsCount() {
   return Object.values(state.goods).reduce((sum, amount) => sum + amount, 0);
 }
 
+function currentRegion() {
+  return mapRegions.find((region) => region.id === state.regionId) ?? mapRegions[0];
+}
+
+function availableRegions() {
+  return mapRegions.filter((region) => state.realm >= region.minRealm);
+}
+
+function selectRegion(regionId) {
+  const region = mapRegions.find((item) => item.id === regionId);
+  if (!region) return;
+  if (state.realm < region.minRealm) {
+    log(`${region.name}凶险非常，至少要到${realms[region.minRealm].name}才敢长期行走。`, "danger");
+    render();
+    return;
+  }
+  state.regionId = region.id;
+  log(`你将接下来行走的方向定在「${region.name}」。${region.desc}`, "gold");
+  save();
+  render();
+}
+
 function currentSect() {
   return state?.sectId ? sects[state.sectId] : null;
 }
@@ -857,19 +1118,42 @@ function bestBreakPillForTarget() {
 }
 
 function baseBreakChance() {
+  const realmPressure = state.realm * 8 + Math.max(0, state.realm - 2) * 5;
   return clamp(Math.floor(
-    8 +
-    state.mind * 0.12 +
-    state.luck * 0.7 +
-    state.insight * 0.65 +
-    state.worldliness * 0.25 -
+    5 +
+    state.mind * 0.08 +
+    state.luck * 0.45 +
+    state.insight * 0.42 +
+    state.worldliness * 0.12 +
+    state.power * 0.08 -
     state.seclusionFatigue * 5 -
-    state.realm * 6
-  ), 5, 75);
+    realmPressure
+  ), 3, 52);
+}
+
+function prepConfig(targetIndex = targetRealmIndex()) {
+  return breakthroughPreparations[targetIndex] ?? null;
+}
+
+function prepLineScore(line, store) {
+  const owned = store?.[line.id] ?? 0;
+  return owned >= line.amount ? line.bonus : Math.floor(line.bonus * owned / line.amount);
+}
+
+function breakthroughPrepScore(targetIndex = targetRealmIndex()) {
+  const config = prepConfig(targetIndex);
+  if (!config) return 0;
+  const materialScore = config.materials.reduce((sum, line) => sum + prepLineScore(line, state.goods), 0);
+  const elixirScore = config.elixirs.reduce((sum, line) => sum + prepLineScore(line, state.elixirPills), 0);
+  const sectScore = currentSect() ? Math.min(10, Math.floor(state.sectContribution / 18) + state.sectReputation) : 0;
+  const manualScore = Math.min(8, Math.floor(state.dao / Math.max(3, realms[targetIndex - 1]?.insightNeed || 3)));
+  return clamp(materialScore + elixirScore + sectScore + manualScore, 0, 42);
 }
 
 function breakthroughChance(pill = bestBreakPillForTarget()) {
-  return clamp(baseBreakChance() + (pill?.bonus ?? 0), 5, 90);
+  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
+  const upper = clamp(68 - state.realm * 3 + Math.floor(state.luck / 4), 38, 78);
+  return clamp(baseBreakChance() + breakthroughPrepScore() + pillBonus, 3, upper);
 }
 
 function pickMarketPill() {
@@ -890,13 +1174,29 @@ function pickMarketElixir() {
 }
 
 function maybeFindElixirPill(kind) {
-  const chanceMap = { travel: 16, social: 12, dungeon: 24 };
+  const chanceMap = {
+    travel: 16,
+    social: 12,
+    dungeon: 24,
+    sectMission: 18,
+    herbGarden: 36,
+    sectTrial: 18,
+    demonTrial: 24,
+    blackMarket: 38,
+    raidTreasure: 20
+  };
   const chance = (chanceMap[kind] ?? 0) + Math.floor(state.luck / 2);
   if (roll(1, 100) > chance) return "";
   const pools = {
     travel: ["qingxin", "yangyuan", "bigu", "juling"],
     social: ["qingxin", "ningshen", "bigu"],
-    dungeon: ["yangyuan", "juling", "ningshen", "yulu"]
+    dungeon: ["yangyuan", "juling", "ningshen", "yulu"],
+    sectMission: ["qingxin", "yangyuan", "bigu", "ningshen"],
+    herbGarden: ["qingxin", "yangyuan", "ningshen", "bigu", "yulu"],
+    sectTrial: ["yangyuan", "ningshen", "bigu"],
+    demonTrial: ["yangyuan", "juling", "ningshen", "yulu"],
+    blackMarket: ["juling", "ningshen", "yangyuan", "yulu"],
+    raidTreasure: ["qingxin", "yangyuan", "juling", "ningshen"]
   };
   const pill = elixirById(pick(pools[kind] ?? ["qingxin"]));
   if (!pill) return "";
@@ -906,7 +1206,17 @@ function maybeFindElixirPill(kind) {
 
 function maybeFindBreakthroughPill(kind) {
   if (!nextRealm()) return "";
-  const chanceMap = { travel: 10, social: 6, dungeon: 20 };
+  const chanceMap = {
+    travel: 10,
+    social: 6,
+    dungeon: 20,
+    sectMission: 10,
+    herbGarden: 8,
+    sectTrial: 8,
+    demonTrial: 14,
+    blackMarket: 18,
+    raidTreasure: 12
+  };
   const chance = (chanceMap[kind] ?? 0) + Math.floor(state.luck / 2);
   if (roll(1, 100) > chance) return "";
   const pill = pickMarketPill();
@@ -916,6 +1226,7 @@ function maybeFindBreakthroughPill(kind) {
 }
 
 function maybeFindTradeLoot(kind) {
+  const region = currentRegion();
   const pools = {
     travel: [
       ["spiritHerb", 38],
@@ -931,12 +1242,46 @@ function maybeFindTradeLoot(kind) {
     social: [
       ["manual", 16],
       ["spiritHerb", 12]
+    ],
+    sectMission: [
+      ["spiritHerb", 26],
+      ["beastCore", 18],
+      ["manual", 12],
+      ["formationShard", 8]
+    ],
+    herbGarden: [
+      ["spiritHerb", 54],
+      ["manual", 8]
+    ],
+    sectTrial: [
+      ["manual", 16],
+      ["spiritOre", 12]
+    ],
+    demonTrial: [
+      ["demonBone", 28],
+      ["beastCore", 28],
+      ["manual", 12],
+      ["rareManual", 8]
+    ],
+    blackMarket: [
+      ["manual", 20],
+      ["formationShard", 16],
+      ["spiritOre", 14],
+      ["rareManual", 8]
+    ],
+    raidTreasure: [
+      ["spiritOre", 24],
+      ["manual", 22],
+      ["beastCore", 18],
+      ["rareManual", 10]
     ]
   };
+  const regionLoot = kind === "dungeon" ? region.dungeonLoot : kind === "travel" ? region.travelLoot : [];
   const found = [];
-  (pools[kind] ?? []).forEach(([goodId, chance]) => {
-    if (roll(1, 100) <= chance + Math.floor(state.luck / 3)) {
-      const amount = goodId === "spiritHerb" ? roll(1, 3) : 1;
+  [...(pools[kind] ?? []), ...regionLoot].forEach(([goodId, chance]) => {
+    const dangerBonus = kind === "dungeon" ? Math.floor(region.danger / 5) : Math.floor(region.danger / 8);
+    if (roll(1, 100) <= chance + dangerBonus + Math.floor(state.luck / 3)) {
+      const amount = goodId === "spiritHerb" ? roll(1, 3) : goodId === "beastHide" ? roll(1, 2) : 1;
       addGood(goodId, amount);
       found.push(`${goodById(goodId).name} x${amount}`);
     }
@@ -1079,8 +1424,10 @@ function doAction(action) {
     doBloodForge();
   }
 
-  checkRandomCalamity();
-  checkWorldIncident();
+  if (!state.pendingChoice) {
+    checkRandomCalamity();
+    checkWorldIncident();
+  }
   save();
   render();
 }
@@ -1143,18 +1490,72 @@ function joinSect(sectId) {
     : { power: 4, cultivation: 24, mind: -3, spiritStones: 30, demonicReputation: 3, notoriety: 1 });
 }
 
+function generatedContext(kind, baseGain = 0) {
+  const layer = eventLayers[kind] ?? eventLayers.travel;
+  const region = currentRegion();
+  const pressure = roll(1, 10) + Math.floor(region.danger / 8) + (kind === "dungeon" || kind === "demonTrial" ? 4 : 0);
+  const actor = pick(layer.actors);
+  const place = pick(layer.places);
+  const conflict = pick(layer.conflicts);
+  const secret = pick(layer.secrets);
+  const titleSeed = pick(layer.title);
+  return {
+    kind,
+    baseGain,
+    region,
+    place,
+    actor,
+    conflict,
+    secret,
+    pressure,
+    danger: region.danger + pressure + (kind === "raidTreasure" ? 10 : 0),
+    title: `${titleSeed} · ${place}`
+  };
+}
+
+function eventIntro(ctx) {
+  const sectPrefix = ctx.kind === "sectMission" || ctx.kind === "herbGarden" || ctx.kind === "sectTrial"
+    ? "宗门执事递来一枚任务玉牌"
+    : ctx.kind === "demonTrial" || ctx.kind === "blackMarket" || ctx.kind === "raidTreasure"
+      ? "血河暗线送来一截黑色令签"
+      : `${ctx.region.name}风声不太对`;
+  const hiddenTone = roll(1, 100) <= 50 ? `你隐约觉得，${ctx.secret}。` : "眼前只露出半截线头，后面还有东西藏着。";
+  return `${sectPrefix}。你来到${ctx.place}，遇见${ctx.actor}，对方${ctx.conflict}。${hiddenTone}`;
+}
+
+function openGeneratedEncounter(kind, baseGain = 0) {
+  const ctx = generatedContext(kind, baseGain);
+  state.pendingChoice = {
+    kind,
+    generated: true,
+    title: ctx.title,
+    regionId: ctx.region.id,
+    text: eventIntro(ctx),
+    choices: generateChoices(kind, ctx)
+  };
+  if (kind === "travel") add(state, { seclusionFatigue: -1 });
+  const gainText = baseGain > 0 ? `此前行止亦是修行，修为增长 ${baseGain}。` : "";
+  log(`你遇见了「${ctx.title}」。${state.pendingChoice.text}${gainText}`, ctx.danger >= 34 ? "danger" : "gold");
+}
+
 function openEncounter(kind, baseGain = 0) {
+  if (generatedEventKinds.has(kind)) {
+    openGeneratedEncounter(kind, baseGain);
+    return;
+  }
   const index = roll(0, encounters[kind].length - 1);
   const event = encounters[kind][index];
+  const region = currentRegion();
   state.pendingChoice = {
     kind,
     title: event.title,
-    text: event.text,
+    regionId: region.id,
+    text: `${region.name}：${event.text}`,
     choices: generateChoices(kind)
   };
   if (kind === "travel") add(state, { seclusionFatigue: -1 });
   const gainText = baseGain > 0 ? `一路行止亦是修行，修为增长 ${baseGain}。` : "";
-  log(`你遇见了「${event.title}」。${event.text}${gainText}`, "gold");
+  log(`你在「${region.name}」遇见了「${event.title}」。${event.text}${gainText}`, "gold");
 }
 
 function chooseOption(index) {
@@ -1185,7 +1586,8 @@ function getPendingEncounter() {
   return null;
 }
 
-function generateChoices(kind) {
+function generateChoices(kind, ctx = null) {
+  if (ctx) return generateLayeredChoices(kind, ctx);
   const pool = [...choiceBlueprints[kind]];
   const count = kind === "dungeon" ? 3 : roll(2, 3);
   const choices = [];
@@ -1198,14 +1600,76 @@ function generateChoices(kind) {
   return choices;
 }
 
-function materializeChoice(blueprint) {
+function generateLayeredChoices(kind, ctx) {
+  const styles = [...(kindChoiceStyles[kind] ?? kindChoiceStyles.travel)];
+  const count = kind === "dungeon" || kind === "demonTrial" || kind === "raidTreasure" ? 3 : roll(2, 4);
+  const choices = [];
+
+  while (choices.length < count && styles.length) {
+    const style = styles.splice(roll(0, styles.length - 1), 1)[0];
+    choices.push(materializeLayeredChoice(style, ctx));
+  }
+
+  return choices;
+}
+
+function addPatchValue(patch, key, value) {
+  patch[key] = (patch[key] ?? 0) + value;
+}
+
+function applyKindFlavorToEffects(effects, ctx, style) {
+  if (ctx.kind === "sectMission" || ctx.kind === "herbGarden" || ctx.kind === "sectTrial") {
+    addPatchValue(effects, "sectContribution", style === "retreat" ? roll(4, 10) : roll(10, 24));
+    addPatchValue(effects, "sectReputation", roll(0, 1));
+    addPatchValue(effects, "righteousReputation", style === "rescue" ? roll(1, 2) : roll(0, 1));
+    if (style === "profit") addPatchValue(effects, "mind", -roll(1, 4));
+  }
+  if (ctx.kind === "demonTrial" || ctx.kind === "blackMarket" || ctx.kind === "raidTreasure") {
+    addPatchValue(effects, "sectContribution", style === "retreat" ? roll(3, 8) : roll(10, 28));
+    addPatchValue(effects, "sectReputation", roll(0, 1));
+    addPatchValue(effects, "demonicReputation", style === "rescue" ? roll(0, 1) : roll(1, 2));
+    if (style === "force" || style === "profit") addPatchValue(effects, "notoriety", roll(0, 2));
+  }
+  if (ctx.kind === "herbGarden" && style !== "retreat") addPatchValue(effects, "mind", roll(1, 4));
+  if (ctx.kind === "blackMarket" && style === "bargain") addPatchValue(effects, "spiritStones", -Math.min(state.spiritStones, roll(20, 70)));
+}
+
+function materializeLayeredChoice(style, ctx) {
+  const blueprint = generatedChoiceStyles[style] ?? generatedChoiceStyles.observe;
+  const effects = blueprint.effect(ctx);
+  applyKindFlavorToEffects(effects, ctx, style);
+  const secretRevealed = roll(1, 100) <= 38 + Math.floor(state.luck / 2) + (style === "observe" ? 18 : 0);
+  const twist = secretRevealed ? `你看穿暗线：${ctx.secret}。` : pick([
+    "局势比表面更乱，你只能吃下眼前这份结果。",
+    "你以为自己看清了，其实仍有人藏在更后面。",
+    "这件事暂时了结，却像是在命数上添了一笔。"
+  ]);
+  const pressureText = ctx.pressure >= 10 ? "局势很紧，稍慢一步就会翻车。" : "局势尚有回旋余地。";
   return {
     label: pick(blueprint.labels),
-    hint: pick(blueprint.hints),
+    hint: `${pick(blueprint.hints)} · ${ctx.region.name}危险 ${ctx.region.danger} · 变数 ${ctx.pressure}`,
+    result: `${pick(blueprint.results)}${pressureText}${twist}`,
+    type: blueprint.type,
+    effects,
+    deathChance: blueprint.death(ctx),
+    generatedStyle: style
+  };
+}
+
+function materializeChoice(blueprint) {
+  const region = currentRegion();
+  const effects = blueprint.effect();
+  const regionDeath = blueprint.style === "withdraw" ? 0 : Math.floor(region.danger / (blueprint.style === "deep" ? 2 : 4));
+  if (blueprint.style === "risk" || blueprint.style === "deep" || blueprint.style === "team") {
+    effects.health = (effects.health ?? 0) - Math.floor(region.danger / 5);
+  }
+  return {
+    label: pick(blueprint.labels),
+    hint: `${pick(blueprint.hints)} · ${region.name}危险 ${region.danger}`,
     result: pick(blueprint.results),
     type: blueprint.style === "deep" || blueprint.style === "risk" ? "danger" : blueprint.style === "withdraw" ? "" : "gold",
-    effects: blueprint.effect(),
-    deathChance: blueprint.death()
+    effects,
+    deathChance: blueprint.death() + regionDeath
   };
 }
 
@@ -1260,21 +1724,7 @@ function gainCultivation(source, choice = null) {
 function doSectMission() {
   passYears(1);
   if (state.ended) return;
-  const injury = roll(0, 16);
-  const gain = gainCultivation("travel") + roll(8, 22);
-  const dutyGain = roll(8, 18);
-  state.cultivation += dutyGain;
-  add(state, {
-    sectContribution: roll(16, 28),
-    sectReputation: 1,
-    righteousReputation: 1,
-    spiritStones: roll(18, 46),
-    power: roll(1, 4),
-    health: -injury
-  });
-  if (roll(1, 100) <= 26 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "bigu"]));
-  const danger = injury > 10 ? "途中遭妖兽反扑，挂了些彩。" : "一路尚算顺遂。";
-  log(`你接下青岚宗巡山除妖任务，清剿山道邪祟，得宗门贡献，修为增长 ${gain + dutyGain}。${danger}`, injury > 10 ? "danger" : "gold");
+  openEncounter("sectMission", gainCultivation("travel"));
 }
 
 function doSectTeach() {
@@ -1292,67 +1742,31 @@ function doSectTeach() {
 function doHerbGarden() {
   passYears(1);
   if (state.ended) return;
-  add(state, { sectContribution: roll(10, 18), righteousReputation: 1, mind: roll(2, 6), cultivation: roll(8, 22), spiritStones: roll(8, 22) });
-  if (roll(1, 100) <= 55 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "ningshen", "bigu"]));
-  if (roll(1, 100) <= 38 + state.luck) addGood("spiritHerb", roll(1, 2));
-  log("你在青岚宗药园值守一年，辨识灵草、驱赶灵虫，得了些贡献与药香余泽。", "gold");
+  openEncounter("herbGarden", roll(8, 22) + state.realm * 4);
 }
 
 function doSectTrial() {
   passYears(1);
   if (state.ended) return;
-  const won = roll(1, 100) <= 42 + state.power + state.realm * 5;
-  const practice = won ? roll(36, 76) + state.realm * 12 : roll(16, 34) + state.realm * 8;
-  add(state, {
-    power: won ? roll(4, 8) : roll(1, 4),
-    cultivation: practice,
-    sectContribution: won ? 26 : 10,
-    sectReputation: won ? 2 : 1,
-    righteousReputation: won ? 2 : 0,
-    mind: won ? 4 : -2,
-    health: won ? -roll(0, 8) : -roll(6, 18)
-  });
-  log(won ? `门内小比上你连胜数场，外门执事终于记住了你的名字，修为增长 ${practice}。` : `门内小比你败于同门剑下，虽有不甘，也看清了自身短板，修为增长 ${practice}。`, won ? "gold" : "danger");
+  openEncounter("sectTrial", roll(16, 38) + state.realm * 8);
 }
 
 function doDemonTrial() {
   passYears(1);
   if (state.ended) return;
-  if (deadlyRoll(state, 22)) {
-    die(state, "魔窟试炼中血雾倒卷，你没能走出那道石门。");
-    return;
-  }
-  const gain = gainCultivation("dungeon");
-  add(state, { sectContribution: roll(20, 36), sectReputation: 1, demonicReputation: 2, notoriety: 1, power: roll(4, 9), mind: -roll(4, 10), health: -roll(12, 28) });
-  if (roll(1, 100) <= 35 + state.luck) addElixirPill(pick(["yangyuan", "juling", "ningshen"]));
-  log(`你入魔窟试炼，与残魂妖影厮杀一夜，修为增长 ${gain}，也染了一身血煞。`, "danger");
+  openEncounter("demonTrial", gainCultivation("dungeon"));
 }
 
 function doBlackMarket() {
   passYears(1);
   if (state.ended) return;
-  if (state.spiritStones >= 70) {
-    add(state, { spiritStones: -70, sectContribution: roll(8, 16), dao: roll(1, 4), mind: roll(0, 4), worldliness: 2, demonicReputation: 1 });
-    addElixirPill(pick(["juling", "ningshen", "yangyuan", "yulu"]));
-    if (roll(1, 100) <= 28 + state.luck) addBreakPill(pickMarketPill()?.id ?? "qi");
-    log("你借血河教暗线进入黑市，花灵石换来丹药、破境传闻与一份人情。", "gold");
-    return;
-  }
-  add(state, { sectContribution: roll(8, 18), dao: roll(0, 2), worldliness: 2, mind: -1, demonicReputation: 1 });
-  log("你囊中灵石不足，只替黑市牵线跑腿，换了些魔门贡献，也听来几句偏门破境传闻。", "");
+  openEncounter("blackMarket", state.spiritStones >= 70 ? roll(8, 18) : 0);
 }
 
 function doRaidTreasure() {
   passYears(1);
   if (state.ended) return;
-  if (deadlyRoll(state, 18)) {
-    die(state, "你伏击夺宝时撞上硬茬，被对方反杀于荒岭。");
-    return;
-  }
-  add(state, { spiritStones: roll(65, 150), sectContribution: roll(12, 24), demonicReputation: 2, notoriety: roll(1, 3), power: roll(3, 7), health: -roll(12, 34), mind: -roll(2, 8) });
-  if (roll(1, 100) <= 45) addGood(pick(["manual", "beastCore", "spiritOre"]), 1);
-  if (roll(1, 100) <= 32 + state.luck) addElixirPill(pick(["qingxin", "yangyuan", "juling", "ningshen"]));
-  log("你设伏夺宝，抢得一批灵石与货品。此事无人明说，但血河教内多看了你一眼。", "danger");
+  openEncounter("raidTreasure", roll(12, 34) + state.realm * 8);
 }
 
 function doHideCultivate() {
@@ -1374,6 +1788,32 @@ function doBloodForge() {
   const daoGain = roll(0, 2) + (roll(1, 100) <= 22 + state.realm * 4 ? 1 : 0);
   add(state, { sectContribution: -24, demonicReputation: 1, notoriety: 1, power: roll(8, 14), dao: daoGain, cultivation: roll(42, 88) + state.realm * 10, health: -roll(8, 22), mind: -roll(2, 8) });
   log(`你入血池炼体，骨肉如被刀刮，战力与修为却实实在在涨了一截${daoGain ? "，生死之间也悟出几分狠理" : ""}。`, "danger");
+}
+
+function consumeBreakPreparations() {
+  const config = prepConfig();
+  if (!config) return "";
+  const consumed = [];
+  config.materials.forEach((line) => {
+    const owned = state.goods[line.id] ?? 0;
+    if (owned >= line.amount) {
+      removeGood(line.id, line.amount);
+      consumed.push(`${goodById(line.id)?.name ?? line.id}x${line.amount}`);
+    }
+  });
+  config.elixirs.forEach((line) => {
+    const owned = state.elixirPills[line.id] ?? 0;
+    if (owned >= line.amount) {
+      removeElixirPill(line.id, line.amount);
+      consumed.push(`${elixirById(line.id)?.name ?? line.id}x${line.amount}`);
+    }
+  });
+  if (currentSect() && state.sectContribution >= 18) {
+    const used = Math.min(state.sectContribution, 36 + state.realm * 8);
+    add(state, { sectContribution: -used });
+    consumed.push(`宗门贡献x${used}`);
+  }
+  return consumed.length ? ` 此番布置耗去${consumed.join("、")}。` : "";
 }
 
 function attemptBreakthrough() {
@@ -1406,11 +1846,14 @@ function attemptBreakthrough() {
   }
 
   const pill = bestBreakPillForTarget();
+  const prepScore = breakthroughPrepScore();
   const chance = breakthroughChance(pill);
   const success = roll(1, 100) <= chance;
   if (pill) removeBreakPill(pill.id);
+  const prepText = consumeBreakPreparations();
   passYears(1);
-  const pillText = pill ? `你服下「${pill.name}」，破境成功率提升 ${pill.bonus}%，此番成功率为 ${chance}%。` : `未得破境丹护持，此番成功率仅 ${chance}%。`;
+  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
+  const pillText = pill ? `你服下「${pill.name}」，丹力助推 ${pillBonus}%，此番成功率为 ${chance}%。${prepText}` : `未得破境丹护持，此番成功率仅 ${chance}%。${prepText}`;
 
   if (success) {
     state.realm += 1;
@@ -1423,11 +1866,11 @@ function attemptBreakthrough() {
     state.mind = clamp(state.mind + 8, 0, 100);
     log(`${pillText} 雷声隐隐，你破关而出，终成${realm().name}修士。寿元增至 ${state.life}。`, "gold");
   } else {
-    state.cultivation = Math.floor(state.cultivation * 0.62);
-    state.health -= roll(24, 48);
-    state.mind -= roll(10, 22);
+    state.cultivation = Math.floor(state.cultivation * (0.48 + Math.min(0.14, prepScore / 300)));
+    state.health -= roll(28, 58) + state.realm * 4;
+    state.mind -= roll(12, 26) + state.realm * 2;
     state.seclusionFatigue = clamp(state.seclusionFatigue + 2, 0, 10);
-    if (state.health <= 0 || roll(1, 100) <= 8 + state.realm * 3) {
+    if (state.health <= 0 || roll(1, 100) <= 12 + state.realm * 5 - Math.floor(state.luck / 3)) {
       die(state, `${pillText} 冲关失败，灵气倒卷，经脉寸断，你没能撑过这场大劫。`);
       return;
     }
@@ -1564,6 +2007,7 @@ function normalizeState(saved) {
     elixirPills: saved.elixirPills ?? {},
     breakPills: saved.breakPills ?? {},
     goods: saved.goods ?? {},
+    regionId: saved.regionId ?? "greenHills",
     sectId: saved.sectId ?? null,
     sectContribution: saved.sectContribution ?? 0,
     sectReputation: saved.sectReputation ?? 0,
@@ -1639,6 +2083,7 @@ function render() {
   $("detailCultivationBar").style.width = `${progress}%`;
   $("detailMindBar").style.width = `${state.mind}%`;
   renderBreakNeed();
+  renderMap();
   renderMarket();
 
   const statHtml = [
@@ -1672,6 +2117,9 @@ function render() {
     ["魔道声望", state.demonicReputation],
     ["通缉", state.notoriety],
     ["货品", goodsCount()],
+    ["地域", currentRegion().name],
+    ["妖险", currentRegion().danger],
+    ["破境筹备", `${breakthroughPrepScore()}%`],
     ["尘缘", state.worldliness],
     ["行情", marketLabel()],
     ["闭关疲惫", state.seclusionFatigue]
@@ -1784,6 +2232,28 @@ function renderMarket() {
     : `<div class="market-empty">暂无可售货品。外出、秘境、论道可获得灵草、内丹、残卷等。</div>`;
 }
 
+function renderMap() {
+  if (!$("mapRegions")) return;
+  const region = currentRegion();
+  $("regionHint").textContent = `当前：${region.name} · 危险 ${region.danger}`;
+  $("mapRegions").innerHTML = mapRegions.map((item) => {
+    const locked = state.realm < item.minRealm;
+    const loot = [...item.travelLoot, ...item.dungeonLoot]
+      .map(([goodId]) => goodById(goodId)?.name)
+      .filter(Boolean)
+      .filter((name, index, list) => list.indexOf(name) === index)
+      .slice(0, 3)
+      .join(" / ");
+    return `<button class="region-btn ${item.id === region.id ? "active" : ""}" data-region="${item.id}" type="button" ${locked ? "disabled" : ""}>
+      <strong>${item.name}${locked ? ` · ${realms[item.minRealm].name}解锁` : ""}</strong>
+      <span>危险 ${item.danger} · ${loot}</span>
+    </button>`;
+  }).join("");
+  document.querySelectorAll("[data-region]").forEach((button) => {
+    button.addEventListener("click", () => selectRegion(button.dataset.region));
+  });
+}
+
 function renderChoicePanel() {
   const choice = getPendingEncounter();
   $("choicePanel").classList.toggle("hidden", !choice);
@@ -1824,11 +2294,27 @@ function renderBreakNeed() {
     return `<div class="need-line ${ok ? "ok" : "bad"}"><span>${label}</span><strong>${value}/${need}</strong></div>`;
   }).join("");
   const pill = bestBreakPillForTarget();
-  const pillName = pill ? `${pill.name} +${pill.bonus}%` : "无";
+  const config = prepConfig();
+  const materialHtml = config ? [
+    ...config.materials.map((line) => {
+      const good = goodById(line.id);
+      const owned = state.goods[line.id] ?? 0;
+      return `<div class="need-line ${owned >= line.amount ? "ok" : "bad"}"><span>${good?.name ?? line.id}</span><strong>${owned}/${line.amount} +${line.bonus}%</strong></div>`;
+    }),
+    ...config.elixirs.map((line) => {
+      const pillItem = elixirById(line.id);
+      const owned = state.elixirPills[line.id] ?? 0;
+      return `<div class="need-line ${owned >= line.amount ? "ok" : "bad"}"><span>${pillItem?.name ?? line.id}</span><strong>${owned}/${line.amount} +${line.bonus}%</strong></div>`;
+    })
+  ].join("") : "";
+  const pillBonus = pill ? Math.min(pill.bonus, 12 + state.realm * 3) : 0;
+  const pillName = pill ? `${pill.name} +${pillBonus}%` : "无";
   const html = `${needHtml}
     <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
+    <div class="need-line ok"><span>筹备加成</span><strong>${breakthroughPrepScore()}%</strong></div>
     <div class="need-line ${pill ? "ok" : "bad"}"><span>可用破境丹</span><strong>${pillName}</strong></div>
-    <div class="need-line ${pill ? "ok" : ""}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>`;
+    <div class="need-line ${breakthroughChance(pill) >= 30 ? "ok" : "bad"}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>
+    ${config ? `<div class="need-line"><span>${config.name}</span><strong>${config.notes}</strong></div>${materialHtml}` : ""}`;
   $("breakNeed").innerHTML = html;
   $("detailBreakNeed").innerHTML = html;
 }

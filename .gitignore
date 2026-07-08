@@ -1,0 +1,4 @@
+cloudflared.exe
+*.log
+*.zip
+node_modules/

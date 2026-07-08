@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260707-layout-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-random-v1" />
   </head>
   <body>
     <main class="app">
@@ -78,6 +78,14 @@
             <h3>破境条件</h3>
             <div id="breakNeed"></div>
           </div>
+
+          <section class="map-card" data-mobile-panel-child="cultivation">
+            <div class="section-head">
+              <h2>山海地图</h2>
+              <span id="regionHint"></span>
+            </div>
+            <div id="mapRegions" class="map-regions"></div>
+          </section>
 
           <section class="action-board" data-mobile-panel-child="cultivation">
             <div class="section-head">
@@ -171,6 +179,7 @@
       <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     </main>
 
-      <script src="./src/game.js?v=20260707-layout-v1"></script>
+      <script src="./src/game.js?v=20260708-random-v1"></script>
+      <script src="./src/map-break-addon.js?v=20260708-random-v1"></script>
   </body>
 </html>
