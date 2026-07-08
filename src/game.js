@@ -2612,7 +2612,7 @@ function render() {
     ["灵石", state.spiritStones]
   ].map(([label, value]) => `<div class="summary-item"><span>${label}</span><strong>${value}</strong></div>`).join("");
 
-  const resourceHtml = [
+  const resourceEntries = [
     ["资质", state.talent],
     ["悟性", state.insight],
     ["福缘", state.luck],
@@ -2647,8 +2647,19 @@ function render() {
     ["尘缘", state.worldliness],
     ["行情", marketLabel()],
     ["闭关疲惫", state.seclusionFatigue]
-  ].map(([label, value]) => `<div class="resource"><span>${label}</span><strong>${value}</strong></div>`).join("");
-  $("resourceGrid").innerHTML = resourceHtml;
+  ];
+  const coreResourceHtml = [
+    ["灵石", state.spiritStones],
+    ["丹药", elixirCount()],
+    ["货品", goodsCount()],
+    ["主修", activeManual().name],
+    ["地域", currentRegion().name],
+    ["隐患", state.heartDemon + state.hiddenWounds + state.foundationFlaw]
+  ].map(([label, value]) => `<div class="core-resource"><span>${label}</span><strong>${value}</strong></div>`).join("");
+  const resourceHtml = resourceEntries
+    .map(([label, value]) => `<div class="resource"><span>${label}</span><strong>${value}</strong></div>`)
+    .join("");
+  if ($("coreResourceGrid")) $("coreResourceGrid").innerHTML = coreResourceHtml;
   $("detailResourceGrid").innerHTML = resourceHtml;
 
   $("actions").innerHTML = actionList().map((action) => `
@@ -2872,15 +2883,21 @@ function renderBreakNeed() {
   ].join("") : "";
   const pillBonus = pill ? Math.min(pill.bonus, 10 + state.realm * 2) : 0;
   const pillName = pill ? `${pill.name} +${pillBonus}%` : "无";
+  const chance = breakthroughChance(pill);
+  const dangerText = state.heartDemon + state.hiddenWounds + state.foundationFlaw;
+  const summaryHtml = `${needHtml}
+    <div class="need-line ok"><span>筹备</span><strong>${breakthroughPrepScore()}%</strong></div>
+    <div class="need-line ${pill ? "ok" : "bad"}"><span>破境丹</span><strong>${pillName}</strong></div>
+    <div class="need-line ${chance >= 30 ? "ok" : "bad"}"><span>预估</span><strong>${chance}%</strong></div>`;
   const html = `${needHtml}
     <div class="need-line"><span>基础成功率</span><strong>${baseBreakChance()}%</strong></div>
     <div class="need-line ok"><span>筹备加成</span><strong>${breakthroughPrepScore()}%</strong></div>
     <div class="need-line ${pill ? "ok" : "bad"}"><span>可用破境丹</span><strong>${pillName}</strong></div>
     <div class="need-line ${state.tribulationExperience >= targetRealmIndex() * 8 ? "ok" : "bad"}"><span>历劫</span><strong>${state.tribulationExperience}</strong></div>
-    <div class="need-line ${state.heartDemon + state.hiddenWounds + state.foundationFlaw <= 25 ? "ok" : "bad"}"><span>隐患</span><strong>心魔${state.heartDemon} / 暗伤${state.hiddenWounds} / 根基${state.foundationFlaw}</strong></div>
-    <div class="need-line ${breakthroughChance(pill) >= 30 ? "ok" : "bad"}"><span>本次预估</span><strong>${breakthroughChance(pill)}%</strong></div>
+    <div class="need-line ${dangerText <= 25 ? "ok" : "bad"}"><span>隐患</span><strong>心魔${state.heartDemon} / 暗伤${state.hiddenWounds} / 根基${state.foundationFlaw}</strong></div>
+    <div class="need-line ${chance >= 30 ? "ok" : "bad"}"><span>本次预估</span><strong>${chance}%</strong></div>
     ${config ? `<div class="need-line"><span>${config.name}</span><strong>${config.notes}</strong></div>${materialHtml}` : ""}`;
-  $("breakNeed").innerHTML = html;
+  $("breakNeed").innerHTML = summaryHtml;
   $("detailBreakNeed").innerHTML = html;
 }
 
@@ -3147,6 +3164,8 @@ $("mobileTabs").addEventListener("click", (event) => {
 });
 $("closeDetailBtn").addEventListener("click", closeDetailModal);
 $("detailBtn").addEventListener("click", openDetailModal);
+$("resourceDetailBtn").addEventListener("click", openDetailModal);
+$("breakDetailBtn").addEventListener("click", openDetailModal);
 $("detailModal").addEventListener("click", (event) => {
   if (event.target === $("detailModal")) closeDetailModal();
 });

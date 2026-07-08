@@ -193,7 +193,7 @@ input {
 
 .game {
   display: grid;
-  grid-template-columns: 270px 1fr 260px;
+  grid-template-columns: 300px minmax(0, 1fr) 240px;
   gap: 16px;
   margin-top: 16px;
   padding: 16px;
@@ -308,6 +308,45 @@ input {
   background: var(--jade);
 }
 
+.core-resource-panel,
+.left-market-panel {
+  margin-top: 16px;
+}
+
+.core-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.core-resource {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.core-resource span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.core-resource strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.left-market-panel h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
 .break-card {
   margin-top: 18px;
   border: 1px solid var(--line);
@@ -323,6 +362,28 @@ input {
 .break-card h3 {
   margin: 0 0 10px;
   font-size: 15px;
+}
+
+.mini-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mini-head h2,
+.mini-head h3 {
+  margin: 0;
+}
+
+.mini-head button {
+  min-height: 34px;
+  padding: 6px 10px;
+  color: var(--jade);
+  background: rgba(45, 143, 120, 0.08);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .need-line {
@@ -617,6 +678,10 @@ input {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.hidden-version-panel {
+  display: none;
 }
 
 .tool-drawer summary,
@@ -1039,6 +1104,21 @@ input {
   .main-panel,
   .side-panel {
     padding: 12px;
+  }
+
+  .stats-panel.mobile-panel-active {
+    display: block;
+  }
+
+  .stats-panel.mobile-panel-active .portrait,
+  .stats-panel.mobile-panel-active .stat-list,
+  .stats-panel.mobile-panel-active .bars,
+  .stats-panel.mobile-panel-active .core-resource-panel {
+    display: none;
+  }
+
+  .stats-panel.mobile-panel-active .left-market-panel {
+    margin-top: 0;
   }
 
   .mobile-summary.mobile-panel-active {

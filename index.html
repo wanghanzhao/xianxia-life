@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>尘缘修仙录</title>
-    <link rel="stylesheet" href="./styles.css?v=20260708-local-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-compact-pc" />
   </head>
   <body>
     <main class="app">
@@ -34,7 +34,7 @@
       </section>
 
       <section id="game" class="game hidden">
-        <aside class="stats-panel" data-mobile-panel="details">
+        <aside class="stats-panel" data-mobile-panel="market">
           <div class="portrait">
             <div class="avatar-frame">
               <img id="heroAvatar" src="./assets/characters/cultivator-male.png" alt="角色立绘" />
@@ -54,6 +54,17 @@
               <span>心境</span>
               <div class="bar"><i id="mindBar"></i></div>
             </div>
+          </div>
+          <div class="core-resource-panel">
+            <div class="mini-head">
+              <h2>资源</h2>
+              <button id="resourceDetailBtn" type="button">详情</button>
+            </div>
+            <div id="coreResourceGrid" class="core-resource-grid"></div>
+          </div>
+          <div class="left-market-panel">
+            <h2>交易行</h2>
+            <div id="marketPanel" class="market-panel"></div>
           </div>
         </aside>
 
@@ -76,7 +87,10 @@
           </div>
 
           <div class="break-card break-card-main" data-mobile-panel-child="cultivation">
-            <h3>破境条件</h3>
+            <div class="mini-head">
+              <h3>破境条件</h3>
+              <button id="breakDetailBtn" type="button">详情</button>
+            </div>
             <div id="breakNeed"></div>
           </div>
 
@@ -105,10 +119,6 @@
         </section>
 
         <aside class="side-panel" data-mobile-panel="market">
-          <div class="desktop-only" data-mobile-panel-child="details">
-            <h2>资源与资质</h2>
-            <div id="resourceGrid" class="resource-grid"></div>
-          </div>
           <div class="tool-drawers" data-mobile-panel-child="market">
             <details class="tool-drawer" open>
               <summary>常用</summary>
@@ -138,10 +148,6 @@
             </details>
           </div>
           <div data-mobile-panel-child="market">
-            <h2>交易行</h2>
-            <div id="marketPanel" class="market-panel"></div>
-          </div>
-          <div data-mobile-panel-child="market">
             <details class="compact-section" open>
               <summary>机缘与负累</summary>
               <div id="traits" class="traits"></div>
@@ -150,7 +156,7 @@
               <summary>行囊</summary>
               <div id="inventory" class="inventory"></div>
             </details>
-            <details class="compact-section">
+            <details class="compact-section hidden-version-panel">
               <summary>版本与分享</summary>
               <div id="versionPanel" class="version-panel"></div>
             </details>
@@ -209,7 +215,7 @@
       <div id="toastStack" class="toast-stack" aria-live="polite"></div>
     </main>
 
-      <script src="./src/game.js?v=20260708-local-v1"></script>
-      <script src="./src/map-break-addon.js?v=20260708-local-v1"></script>
+      <script src="./src/game.js?v=20260708-compact-pc"></script>
+      <script src="./src/map-break-addon.js?v=20260708-compact-pc"></script>
   </body>
 </html>
